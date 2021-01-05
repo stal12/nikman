@@ -3,6 +3,8 @@
 
 #include <filesystem>
 #include <vector>
+#include <random>
+#include <bitset>
 
 #include <glad/glad.h>
 #include <stb_image.h>
@@ -241,6 +243,8 @@ struct Player {
 
     int x, y;
     int next_x, next_y;
+    float precise_x;
+    float precise_y;
     float t = 0;
     const float speed = 1.5f;
     unsigned char direction;
@@ -334,6 +338,9 @@ struct Player {
             t = 0;
         }
 
+        precise_x = (x * (1 - t) + next_x * t);
+        precise_y = (y * (1 - t) + next_y * t);
+
         // Eat crusts
         float dist_threshold = 0.2f;
         if (t < dist_threshold) {
@@ -349,8 +356,8 @@ struct Player {
 
         glm::mat4 world(1.f);
         world = glm::translate(world, glm::vec3(
-            -map_size / 2.f + size / 2.f + size * (x * (1 - t) + next_x * t),
-            -map_size / 2.f + size / 2.f + size * (y * (1 - t) + next_y * t),
+            -map_size / 2.f + size / 2.f + size * precise_x,
+            -map_size / 2.f + size / 2.f + size * precise_y,
             0.f)
         );
         world = glm::scale(world, glm::vec3(size, size, 1.f));
@@ -426,6 +433,159 @@ struct Crust {
             }
         }
 
+    }
+
+};
+
+
+struct RandomGuy {
+
+    const int size = 1;
+
+    unsigned int VBO;
+    unsigned int VAO;
+    unsigned int texture;
+    Shader shader;
+    int map_size;
+
+    int x, y;
+    int next_x, next_y;
+    float precise_x, precise_y;
+    float t = 0;
+    const float speed = 2.f;
+    unsigned char direction;
+
+    std::vector<Slot>& grid;
+
+    std::random_device rd;
+    std::mt19937 mt;
+
+
+    RandomGuy(int map_size_, std::vector<Slot>& grid_) : shader("RandomGuy"), map_size(map_size_), grid(grid_), mt(rd()) {
+
+        MakeRect(0.4f, 0.4f, VAO, VBO);
+
+        texture = MakeTexture("RandomGuy.png", true, true);
+
+        x = 4;
+        y = 4;
+        next_x = 3;
+        next_y = 4;
+        direction = 2;  // A
+
+        shader.use();
+        glm::mat4 world(1.f);
+        world = glm::translate(world, glm::vec3(
+            -map_size / 2.f + size / 2.f + size * (x * (1 - t) + next_x * t),
+            -map_size / 2.f + size / 2.f + size * (y * (1 - t) + next_y * t),
+            0.f)
+        );
+        world = glm::scale(world, glm::vec3(size, size, 1.f));
+        shader.SetMat4("world", world);
+        shader.SetMat4("projection", kProjection);
+
+    }
+
+    ~RandomGuy() {
+        glDeleteBuffers(1, &VBO);
+        glDeleteVertexArrays(1, &VAO);
+    }
+
+    void SetNewDir() {
+
+        const unsigned char walls = grid[y * map_size + x].walls;
+        
+        const unsigned char possible_dirs = ~walls & 15;
+        
+        const unsigned char backward_dir = (direction >> 2) | ((direction << 2) & 15);
+        
+        const unsigned char possible_dirs_without_back = possible_dirs & ~backward_dir;
+
+        if (possible_dirs_without_back == 0) {
+            direction = backward_dir;
+        }
+        else {
+            const int n_dirs = std::bitset<8>(possible_dirs_without_back).count();
+            if (n_dirs == 1) {
+                direction = possible_dirs_without_back;
+            }
+            else {
+                std::uniform_int_distribution dist(0, n_dirs - 1);
+                int random_int = dist(mt);
+
+                int i;
+                for (i = 0; i < 4; ++i) {
+                    if (!(possible_dirs_without_back & (1 << i))) {
+                        continue;
+                    }
+                    if (random_int == 0) {
+                        break;
+                    }
+                    random_int--;                    
+                }
+
+                direction = (1 << i);
+            }
+        }
+    }
+
+    void SetNextXY() {
+        if (direction & 1) {
+            next_x = x;
+            next_y = y + 1;
+        }
+        else if (direction & 2) {
+            next_x = x - 1;
+            next_y = y;
+        }
+        else if (direction & 4) {
+            next_x = x;
+            next_y = y - 1;
+        }
+        else {
+            next_x = x + 1;
+            next_y = y;
+        }
+    }
+
+    void Update(float delta, float player_x, float player_y) {
+
+        t += delta * speed;
+        if (t >= 1.f) {
+            x = next_x;
+            y = next_y;
+            t -= 1.f;
+            SetNewDir();
+            SetNextXY();
+        }
+
+        precise_x = x * (1 - t) + next_x * t;
+        precise_y = y * (1 - t) + next_y * t;
+
+        // Check collision with player
+        constexpr float threshold = 0.1;
+        float squared_dist = (precise_x - player_x)* (precise_x - player_x) + (precise_y - player_y) * (precise_y - player_y);
+        if (squared_dist < threshold) {
+            std::cout << "Preso!" << std::endl;
+        }
+
+    }
+
+    void Render() const {
+        shader.use();
+
+        glm::mat4 world(1.f);
+        world = glm::translate(world, glm::vec3(
+            -map_size / 2.f + size / 2.f + size * precise_x,
+            -map_size / 2.f + size / 2.f + size * precise_y,
+            0.f)
+        );
+        world = glm::scale(world, glm::vec3(size, size, 1.f));
+        shader.SetMat4("world", world);
+
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
 };

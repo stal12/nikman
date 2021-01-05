@@ -93,6 +93,7 @@ int main()
         Wall wall(map.size);
         Crust crust(map.size, map.grid);
         Player player(map.size, map.grid);
+        RandomGuy random_guy(map.size, map.grid);
         map.FillWalls(wall.ver_positions, wall.hor_positions);
 
         // Very simple render loop
@@ -109,6 +110,7 @@ int main()
 
             // Update
             player.Update(delta, wasd);
+            random_guy.Update(delta, player.precise_x, player.precise_y);
 
             // Render
             glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -118,6 +120,7 @@ int main()
             wall.Render();
             crust.Render();
             player.Render();
+            random_guy.Render();
 
             // check and call events and swap the buffers
             glfwPollEvents();
