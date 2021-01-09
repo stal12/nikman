@@ -16,9 +16,10 @@
 #include "utility.h"
 #include "shader.h"
 #include "entity.h"
+#include "level.h"
+#include "game.h"
 
 // WARNING: glfw and glad are currently in Debug mode
-
 
 
 // This callback should be called each time the window is resized
@@ -50,6 +51,9 @@ void processInput(GLFWwindow* window, unsigned int& wasd)
 
 int main()
 {
+
+    LevelDesc level = ReadLevelDesc("C:/Users/stefa/OneDrive/Desktop/level.txt");
+
     constexpr int window_width = 1600;
     constexpr int window_height = window_width / kRatio;
 
@@ -61,6 +65,7 @@ int main()
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
     // Create window object
+    //GLFWwindow* window = glfwCreateWindow(window_width, window_height, "Nikman", glfwGetPrimaryMonitor(), NULL);
     GLFWwindow* window = glfwCreateWindow(window_width, window_height, "Nikman", NULL, NULL);
     if (window == NULL)
     {
@@ -89,16 +94,12 @@ int main()
     
     {
 
-        Map map;
-        Wall wall(map.size);
-        Crust crust(map.size, map.grid);
-        Player player(map.size, map.grid);
-        RandomGuy random_guy(map.size, map.grid);
-        map.FillWalls(wall.ver_positions, wall.hor_positions);
+        Game game(level);
 
         // Very simple render loop
         float formerFrame = glfwGetTime();
-        while (!glfwWindowShouldClose(window))
+        bool stop_game = false;
+        while (!glfwWindowShouldClose(window) && !stop_game)
         {
             float currentFrame = glfwGetTime();
             float delta = currentFrame - formerFrame;
@@ -109,18 +110,12 @@ int main()
             processInput(window, wasd);
 
             // Update
-            player.Update(delta, wasd);
-            random_guy.Update(delta, player.precise_x, player.precise_y);
+            game.Update(delta, wasd, stop_game);
 
             // Render
             glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
-
-            map.Render();
-            wall.Render();
-            crust.Render();
-            player.Render();
-            random_guy.Render();
+            game.Render();
 
             // check and call events and swap the buffers
             glfwPollEvents();

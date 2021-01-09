@@ -10,7 +10,7 @@
 #include <stb_image.h>
 
 #include "shader.h"
-
+#include "level.h"
 
 
 void MakeRect(float width, float height, unsigned int& VAO, unsigned int& VBO) {
@@ -91,17 +91,18 @@ struct Slot {
 
 struct Map {
 
-    const int size = 5;
+    int h = 5;
+    int w = 5;
 
     unsigned int VBO;
     unsigned int VAO;
     unsigned int texture;
     Shader shader;
-    int remaining_crusts = size * size;
+    int remaining_crusts = h * w;
 
     std::vector<Slot> grid;
 
-    Map() : shader("map"), grid(size* size) {
+    Map(int h_, int w_, const LevelDesc& level) : shader("map"), h(h_), w(w_), grid(h * w) {
 
         MakeRect(1.f, 1.f, VAO, VBO);
 
@@ -109,9 +110,11 @@ struct Map {
 
         shader.use();
         glm::mat4 world(1.f);
-        world = glm::scale(world, glm::vec3(size, size, 1.f));
+        world = glm::scale(world, glm::vec3(w, h, 1.f));
         shader.SetMat4("world", world);
         shader.SetMat4("projection", kProjection);
+
+        FillWalls(level.ver_walls, level.hor_walls);
 
     }
 
@@ -133,22 +136,46 @@ struct Map {
 
         for (const auto& pos : ver_walls) {
             if (pos.first > 0) {
-                grid[pos.first - 1 + pos.second * size].walls |= (1 << 3);
+                grid[pos.first - 1 + pos.second * w].walls |= (1 << 3);
             }
-            if (pos.first < size) {
-                grid[pos.first + pos.second * size].walls |= (1 << 1);
+            if (pos.first < w) {
+                grid[pos.first + pos.second * w].walls |= (1 << 1);
             }
         }
 
         for (const auto& pos : hor_walls) {
             if (pos.second > 0) {
-                grid[pos.first + (pos.second - 1) * size].walls |= (1 << 0);
+                grid[pos.first + (pos.second - 1) * w].walls |= (1 << 0);
             }
-            if (pos.second < size) {
-                grid[pos.first + pos.second * size].walls |= (1 << 2);
+            if (pos.second < h) {
+                grid[pos.first + pos.second * w].walls |= (1 << 2);
             }
         }
 
+    }
+
+    void LoadLevel(const LevelDesc& level) {
+        h = level.h;
+        w = level.w;
+        
+        grid = std::vector<Slot>(h * w);
+        for (const auto& x : level.pumpkin_home) {
+            grid[x.first + x.second * w].crust = false;
+        }
+        for (const auto& x : level.hammers) {
+            grid[x.first + x.second * w].crust = false;
+        }
+        grid[level.player_pos.first + level.player_pos.second * w].crust = false;
+
+        FillWalls(level.ver_walls, level.hor_walls);
+        remaining_crusts = h * w - level.hammers.size() - level.pumpkin_home.size() - 1;
+
+        shader.use();
+        glm::mat4 world(1.f);
+        world = glm::scale(world, glm::vec3(w, h, 1.f));
+        shader.SetMat4("world", world);
+        shader.SetFloat("h", (float) h);
+        shader.SetFloat("w", (float) w);
     }
 
 };
@@ -164,9 +191,10 @@ struct Wall {
     Shader shader;
     std::vector<std::pair<int, int>> ver_positions;
     std::vector<std::pair<int, int>> hor_positions;
-    float map_size = 5.f;  // this should change with the map
+    float h = 5.f;
+    float w = 5.f;
 
-    Wall(float map_size_) : shader("wall"), map_size(map_size_) {
+    Wall(float h_, float w_, LevelDesc level_) : shader("wall"), h(h_), w(w_) {
 
         MakeRect(0.2f, 1.2f, VAO, VBO);
 
@@ -178,13 +206,8 @@ struct Wall {
         shader.SetMat4("world", world);
         shader.SetMat4("projection", kProjection);
 
-        ver_positions = { {0, 0}, {0, 1}, {0, 2}, {0, 3}, {0, 4},
-                          {5, 0}, {5, 1}, {5, 2}, {5, 3}, {5, 4},
-            {4, 1}, {4, 2} };
-        hor_positions = { {0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0},
-                            {0, 5}, {1, 5}, {2, 5}, {3, 5}, {4, 5},
-                            {0, 1}, {1, 1}, {2, 1}, {3, 1},
-        };
+        ver_positions = level_.ver_walls;
+        hor_positions = level_.hor_walls;
 
     }
 
@@ -203,8 +226,8 @@ struct Wall {
         for (const auto& pos : ver_positions) {
             world = glm::mat4(1.f);
             world = glm::translate(world, glm::vec3(
-                -map_size / 2 + pos.first * size,
-                -map_size / 2 + size / 2 + pos.second * size,
+                -w / 2 + pos.first * size,
+                -h / 2 + size / 2 + pos.second * size,
                 0.f)
             );
             world = glm::scale(world, glm::vec3(size, size, 1.f));
@@ -215,8 +238,8 @@ struct Wall {
         for (const auto& pos : hor_positions) {
             world = glm::mat4(1.f);
             world = glm::translate(world, glm::vec3(
-                -map_size / 2 + size / 2 + pos.first * size,
-                -map_size / 2 + pos.second * size,
+                -w / 2 + size / 2 + pos.first * size,
+                -h / 2 + pos.second * size,
                 0.f)
             );
             world = glm::scale(world, glm::vec3(size, size, 1.f));
@@ -225,6 +248,13 @@ struct Wall {
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
 
+    }
+
+    void LoadLevel(const LevelDesc& level) {
+        h = level.h;
+        w = level.w;
+        ver_positions = level.ver_walls;
+        hor_positions = level.hor_walls;
     }
 
 };
@@ -239,15 +269,22 @@ struct Player {
     unsigned int VAO;
     unsigned int texture;
     Shader shader;
-    int map_size;
+    int h;
+    int w;
 
     int x, y;
     int next_x, next_y;
     float precise_x;
     float precise_y;
     float t = 0;
-    const float speed = 1.5f;
     unsigned char direction;
+    bool just_hit;
+    float time_after_hit;
+    int lives = 3;
+    
+    const float speed = 4.5f;    
+    const float hit_recover_time = 1.0f;
+    const float blink_freq = 50.0f;
 
     enum class State { Idle, Moving };
     State state = State::Idle;
@@ -255,7 +292,7 @@ struct Player {
     std::vector<Slot>& grid;
 
 
-    Player(int map_size_, std::vector<Slot>& grid_) : shader("player"), map_size(map_size_), grid(grid_) {
+    Player(int h_, int w_, std::vector<Slot>& grid_) : shader("player"), h(h_), w(w_), grid(grid_) {
 
         MakeRect(0.7f, 0.7f, VAO, VBO);
 
@@ -269,8 +306,8 @@ struct Player {
         shader.use();
         glm::mat4 world(1.f);
         world = glm::translate(world, glm::vec3(
-            -map_size / 2.f + size / 2.f + size * (x * (1 - t) + next_x * t),
-            -map_size / 2.f + size / 2.f + size * (y * (1 - t) + next_y * t),
+            -w / 2.f + size / 2.f + size * (x * (1 - t) + next_x * t),
+            -h / 2.f + size / 2.f + size * (y * (1 - t) + next_y * t),
             0.f)
         );
         world = glm::scale(world, glm::vec3(size, size, 1.f));
@@ -286,7 +323,7 @@ struct Player {
 
     void FindNext(unsigned char wasd) {
 
-        unsigned char walls = grid[y * map_size + x].walls;
+        unsigned char walls = grid[y * w + x].walls;
 
         if ((wasd & 1) && !(walls & 1)) {
             next_x = x;
@@ -317,7 +354,15 @@ struct Player {
         }
     }
 
-    void Update(float delta, unsigned int wasd) {
+    void Update(float delta, unsigned int wasd, unsigned int& eaten) {
+
+        if (just_hit) {
+            time_after_hit += delta;
+            if (time_after_hit > hit_recover_time) {
+                just_hit = false;                
+            }
+        }
+
         if (state == State::Moving) {
             t += delta * speed;
             if (((direction >> 2) | ((direction << 2) & 15)) & wasd) {
@@ -343,29 +388,61 @@ struct Player {
 
         // Eat crusts
         float dist_threshold = 0.2f;
+        eaten = 0;
         if (t < dist_threshold) {
-            grid[y * map_size + x].crust = false;
+            if (grid[y * w + x].crust) {
+                ++eaten;
+                grid[y * w + x].crust = false;
+            }
         }
         if (t > 1 - dist_threshold) {
-            grid[next_y * map_size + next_x].crust = false;
+            if (grid[next_y * w + next_x].crust) {
+                ++eaten;
+                grid[next_y * w + next_x].crust = false;
+            }
         }
     }
 
     void Render() const {
-        shader.use();
 
+        if (!just_hit || sinf(time_after_hit * blink_freq) > -0.5) {
+            shader.use();
+
+            glm::mat4 world(1.f);
+            world = glm::translate(world, glm::vec3(
+                -w / 2.f + size / 2.f + size * precise_x,
+                -h / 2.f + size / 2.f + size * precise_y,
+                0.f)
+            );
+            world = glm::scale(world, glm::vec3(size, size, 1.f));
+            shader.SetMat4("world", world);
+
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glBindVertexArray(VAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+    }
+
+    void LoadLevel(const LevelDesc& level) {
+        h = level.h;
+        w = level.w;
+        x = level.player_pos.first;
+        y = level.player_pos.second;
+        next_x = x;
+        next_y = y;
+        t = 0;
+        state = State::Idle;
+        just_hit = false;
+
+        shader.use();
         glm::mat4 world(1.f);
         world = glm::translate(world, glm::vec3(
-            -map_size / 2.f + size / 2.f + size * precise_x,
-            -map_size / 2.f + size / 2.f + size * precise_y,
+            -w / 2.f + size / 2.f + size * (x * (1 - t) + next_x * t),
+            -h / 2.f + size / 2.f + size * (y * (1 - t) + next_y * t),
             0.f)
         );
         world = glm::scale(world, glm::vec3(size, size, 1.f));
         shader.SetMat4("world", world);
-
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
     }
 
 };
@@ -379,11 +456,12 @@ struct Crust {
     unsigned int VAO;
     unsigned int texture;
     Shader shader;
-    int map_size;
+    int h;
+    int w;
 
     std::vector<Slot>& grid;
 
-    Crust(int map_size_, std::vector<Slot>& grid_) : shader("crust"), map_size(map_size_), grid(grid_) {
+    Crust(int h_, int w_, std::vector<Slot>& grid_) : shader("crust"), h(h_), w(w_), grid(grid_) {
 
         MakeRect(0.2f, 0.4f, VAO, VBO);
 
@@ -410,15 +488,15 @@ struct Crust {
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(VAO);
 
-        for (int x = 0; x < map_size; ++x) {
-            for (int y = 0; y < map_size; ++y) {
+        for (int x = 0; x < w; ++x) {
+            for (int y = 0; y < h; ++y) {
 
-                if (grid[y * map_size + x].crust) {
+                if (grid[y * w + x].crust) {
 
                     glm::mat4 world(1.f);
                     world = glm::translate(world, glm::vec3(
-                        -map_size / 2.f + size / 2.f + size * x,
-                        -map_size / 2.f + size / 2.f + size * y,
+                        -w / 2.f + size / 2.f + size * x,
+                        -h / 2.f + size / 2.f + size * y,
                         0.f
                     ));
 
@@ -435,6 +513,14 @@ struct Crust {
 
     }
 
+    void LoadLevel(const LevelDesc& level) {
+
+        h = level.h;
+        w = level.w;
+
+    }
+
+
 };
 
 
@@ -446,7 +532,8 @@ struct RandomGuy {
     unsigned int VAO;
     unsigned int texture;
     Shader shader;
-    int map_size;
+    int h;
+    int w;
 
     int x, y;
     int next_x, next_y;
@@ -461,7 +548,7 @@ struct RandomGuy {
     std::mt19937 mt;
 
 
-    RandomGuy(int map_size_, std::vector<Slot>& grid_) : shader("RandomGuy"), map_size(map_size_), grid(grid_), mt(rd()) {
+    RandomGuy(int h_, int w_, std::vector<Slot>& grid_) : shader("RandomGuy"), h(h_), w(w_), grid(grid_), mt(rd()) {
 
         MakeRect(0.4f, 0.4f, VAO, VBO);
 
@@ -476,8 +563,8 @@ struct RandomGuy {
         shader.use();
         glm::mat4 world(1.f);
         world = glm::translate(world, glm::vec3(
-            -map_size / 2.f + size / 2.f + size * (x * (1 - t) + next_x * t),
-            -map_size / 2.f + size / 2.f + size * (y * (1 - t) + next_y * t),
+            -w / 2.f + size / 2.f + size * (x * (1 - t) + next_x * t),
+            -h / 2.f + size / 2.f + size * (y * (1 - t) + next_y * t),
             0.f)
         );
         world = glm::scale(world, glm::vec3(size, size, 1.f));
@@ -493,7 +580,7 @@ struct RandomGuy {
 
     void SetNewDir() {
 
-        const unsigned char walls = grid[y * map_size + x].walls;
+        const unsigned char walls = grid[y * w + x].walls;
         
         const unsigned char possible_dirs = ~walls & 15;
         
@@ -548,7 +635,7 @@ struct RandomGuy {
         }
     }
 
-    void Update(float delta, float player_x, float player_y) {
+    void Update(float delta, float player_x, float player_y, bool& hit_player) {
 
         t += delta * speed;
         if (t >= 1.f) {
@@ -566,7 +653,7 @@ struct RandomGuy {
         constexpr float threshold = 0.1;
         float squared_dist = (precise_x - player_x)* (precise_x - player_x) + (precise_y - player_y) * (precise_y - player_y);
         if (squared_dist < threshold) {
-            std::cout << "Preso!" << std::endl;
+            hit_player = true;
         }
 
     }
@@ -576,8 +663,8 @@ struct RandomGuy {
 
         glm::mat4 world(1.f);
         world = glm::translate(world, glm::vec3(
-            -map_size / 2.f + size / 2.f + size * precise_x,
-            -map_size / 2.f + size / 2.f + size * precise_y,
+            -w / 2.f + size / 2.f + size * precise_x,
+            -h / 2.f + size / 2.f + size * precise_y,
             0.f)
         );
         world = glm::scale(world, glm::vec3(size, size, 1.f));
@@ -586,6 +673,26 @@ struct RandomGuy {
         glBindTexture(GL_TEXTURE_2D, texture);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
+    }
+
+    void LoadLevel(const LevelDesc& level) {
+        h = level.h;
+        w = level.w;
+        x = level.pumpkin_home.front().first;   // TODO: implement enemy beginning
+        y = level.pumpkin_home.front().second;
+        next_x = x;
+        next_y = y;
+        t = 0;
+
+        shader.use();
+        glm::mat4 world(1.f);
+        world = glm::translate(world, glm::vec3(
+            -w / 2.f + size / 2.f + size * (x * (1 - t) + next_x * t),
+            -h / 2.f + size / 2.f + size * (y * (1 - t) + next_y * t),
+            0.f)
+        );
+        world = glm::scale(world, glm::vec3(size, size, 1.f));
+        shader.SetMat4("world", world);
     }
 
 };

@@ -145,6 +145,10 @@ struct Shader {
         glUniformMatrix4fv(glGetUniformLocation(program, key), 1, GL_FALSE, glm::value_ptr(value));
     }
 
+    void SetFloat(const char* key, float value) const {
+        glUniform1f(glGetUniformLocation(program, key), value);
+    }
+
 };
 
 #endif SHADER_H
