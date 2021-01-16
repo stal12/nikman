@@ -18,6 +18,8 @@
 #include "entity.h"
 #include "level.h"
 #include "game.h"
+#include "ui.h"
+
 
 // WARNING: glfw and glad are currently in Debug mode
 
@@ -32,8 +34,8 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 // Close the window with ESC
 void processInput(GLFWwindow* window, unsigned int& wasd)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
+    //if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    //    glfwSetWindowShouldClose(window, true);
 
     wasd = 0;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -44,6 +46,18 @@ void processInput(GLFWwindow* window, unsigned int& wasd)
         wasd |= 4;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         wasd |= 8;
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        wasd |= 16;
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        wasd |= 32;
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        wasd |= 64;
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        wasd |= 128;
+    if (glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS)
+        wasd |= 256;
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        wasd |= 512;
 
 }
 
@@ -52,10 +66,7 @@ void processInput(GLFWwindow* window, unsigned int& wasd)
 int main()
 {
 
-    LevelDesc level = ReadLevelDesc("C:/Users/stefa/OneDrive/Desktop/level.txt");
-
-    constexpr int window_width = 1600;
-    constexpr int window_height = window_width / kRatio;
+    LevelDesc level = ReadLevelDesc((std::filesystem::path(kLevelRoot) / std::filesystem::path("level.txt")).string().c_str()); // TODO remove this
 
     // Initialize glfw
     glfwInit();
@@ -66,7 +77,7 @@ int main()
 
     // Create window object
     //GLFWwindow* window = glfwCreateWindow(window_width, window_height, "Nikman", glfwGetPrimaryMonitor(), NULL);
-    GLFWwindow* window = glfwCreateWindow(window_width, window_height, "Nikman", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(kWindowWidth, kWindowHeight, "Nikman", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -83,7 +94,7 @@ int main()
     }
 
     // Set the size of the rendering window, and set a callback for the window resize event
-    glViewport(0, 0, window_width, window_height);
+    glViewport(0, 0, kWindowWidth, kWindowHeight);
     glfwSetFramebufferSizeCallback(window,
         [](GLFWwindow* window, int width, int height) {
             glViewport(0, 0, width, height);
@@ -113,7 +124,7 @@ int main()
             game.Update(delta, wasd, stop_game);
 
             // Render
-            glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+            glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
             game.Render();
 

@@ -1,0 +1,486 @@
+#if !defined NIKMAN_UI_H
+#define NIKMAN_UI_H
+
+#include <vector>
+#include <map>
+#include <string>
+#include <fstream>
+#include <iostream>
+
+#include "utility.h"
+#include "shader.h"
+
+
+
+struct Glyph {
+
+    char c;
+    float w_space;
+    float ox;
+    float oy;
+    float x;
+    float y;
+    float w;
+    float h;
+    std::vector<std::pair<char, int>> kernings;
+
+};
+
+
+struct Font {
+
+    std::string family;
+    int size;
+    int h_space;
+    Glyph glyphs[95];
+    unsigned int texture;
+    int texture_width;
+    int texture_height;
+
+    ~Font() {
+        glDeleteTextures(1, &texture);
+    };
+
+};
+
+
+bool ReadFont(const char* filename, Font& font) {
+
+    font = Font();
+
+    // Very dirty and specific xml parser
+    std::ifstream is(filename);
+    if (!is.is_open()) {
+        std::cerr << "Error in ReadFont: can't open font description.\n";
+        return false;
+    }
+
+    char c;
+
+#define READ_UNTIL(ch) { c = 0; while (c != (ch)) { is >> c; } }
+
+    READ_UNTIL('>');
+    READ_UNTIL('"');
+
+    is >> font.size;
+    is >> c;
+    READ_UNTIL('"');
+    is >> font.family;
+    font.family.resize(font.family.size() - 1);
+
+    READ_UNTIL('"');
+    is >> font.h_space;
+    READ_UNTIL('<');
+
+    for (int i = 0; i < 95; ++i) {
+
+        READ_UNTIL('"');
+        font.glyphs[i].c = i + 32;
+        is >> font.glyphs[i].w_space;
+        is >> c;
+        READ_UNTIL('"');
+        is >> font.glyphs[i].ox;
+        is >> font.glyphs[i].oy;
+        is >> c;
+        READ_UNTIL('"');
+        is >> font.glyphs[i].x;
+        is >> font.glyphs[i].y;
+        is >> font.glyphs[i].w;
+        is >> font.glyphs[i].h;
+        is >> c;
+        READ_UNTIL('"');
+        READ_UNTIL('"');
+        is >> c;
+        if (c == '/') {
+            continue;
+        }
+
+        while (true) {
+            READ_UNTIL('<');
+            is >> c;
+            if (c == '/') {
+                break;
+            }
+            READ_UNTIL('"');
+            int advance;
+            is >> advance;
+            is >> c;
+            READ_UNTIL('"');
+            char next;
+            is >> next;
+            font.glyphs[i].kernings.emplace_back(next, advance);
+        }
+
+    }
+
+    // Texture
+    stbi_set_flip_vertically_on_load(false);
+    font.texture = MakeTexture("F:/progetti miei/nikman/resources/fonts/centaur_regular_32.PNG", font.texture_width, font.texture_height, false, true);
+    stbi_set_flip_vertically_on_load(true);
+    return true;
+
+#undef READ_UNTIL
+}
+
+
+std::vector<float> GetStringVertices(const char* str, const Font& font) {
+    int len = strlen(str);
+    std::vector<float> vertices(strlen(str) * 24);
+    float current_x = 0;
+    float current_y = 0;
+    for (int i = 0; i < len; ++i) {
+        const Glyph& g = font.glyphs[str[i] - 32];
+        vertices[i * 24 + 0] = current_x + g.ox;
+        vertices[i * 24 + 1] = current_y - g.oy;
+        vertices[i * 24 + 2] = g.x;
+        vertices[i * 24 + 3] = g.y;
+        vertices[i * 24 + 4] = current_x + g.ox + g.w;
+        vertices[i * 24 + 5] = current_y - g.oy;
+        vertices[i * 24 + 6] = g.x + g.w;
+        vertices[i * 24 + 7] = g.y;
+        vertices[i * 24 + 8] = current_x + g.ox;
+        vertices[i * 24 + 9] = current_y - g.oy - g.h;
+        vertices[i * 24 + 10] = g.x;
+        vertices[i * 24 + 11] = g.y + g.h;
+        vertices[i * 24 + 12] = current_x + g.ox + g.w;
+        vertices[i * 24 + 13] = current_y - g.oy;
+        vertices[i * 24 + 14] = g.x + g.w;
+        vertices[i * 24 + 15] = g.y;
+        vertices[i * 24 + 16] = current_x + g.ox;
+        vertices[i * 24 + 17] = current_y - g.oy - g.h;
+        vertices[i * 24 + 18] = g.x;
+        vertices[i * 24 + 19] = g.y + g.h;
+        vertices[i * 24 + 20] = current_x + g.ox + g.w;
+        vertices[i * 24 + 21] = current_y - g.oy - g.h;
+        vertices[i * 24 + 22] = g.x + g.w;
+        vertices[i * 24 + 23] = g.y + g.h;
+
+        current_x += g.w_space;
+
+        // Consider kernings
+        const char next = str[i + 1];
+        for (const auto& x : g.kernings) {
+            if (x.first == next) {
+                current_x += x.second;
+                break;
+            }
+        }
+
+    }
+
+    for (int i = 0; i < len * 24; ) {
+        i += 2;
+        vertices[i++] /= font.texture_width;
+        vertices[i++] /= font.texture_height;
+    }
+
+    return vertices;
+}
+
+struct Writing {
+
+    static const glm::vec3 normal_color;
+    static const glm::vec3 highlighted_color;
+
+    unsigned int VAO;
+    unsigned int VBO;
+    float x;
+    float y;
+    unsigned int n_vertices;
+    bool highlighted;
+    bool dynamic;
+    const Font& font;
+
+    Writing(const char* str, int x_, int y_, const Font& font_, bool dynamic_ = false, bool highlighted_ = false) :
+        x(x_), 
+        y(y_), 
+        dynamic(dynamic_),
+        highlighted(highlighted_),
+        font(font_)
+    {
+
+        int len = strlen(str);
+        std::vector<float> vertices(strlen(str) * 24);
+        float current_x = 0;
+        float current_y = 0;
+        for (int i = 0; i < len; ++i) {
+            const Glyph& g = font.glyphs[str[i] - 32];
+            vertices[i * 24 + 0] = current_x + g.ox;
+            vertices[i * 24 + 1] = current_y - g.oy;
+            vertices[i * 24 + 2] = g.x;
+            vertices[i * 24 + 3] = g.y;
+            vertices[i * 24 + 4] = current_x + g.ox + g.w;
+            vertices[i * 24 + 5] = current_y - g.oy;
+            vertices[i * 24 + 6] = g.x + g.w;
+            vertices[i * 24 + 7] = g.y;
+            vertices[i * 24 + 8] = current_x + g.ox;
+            vertices[i * 24 + 9] = current_y - g.oy - g.h;
+            vertices[i * 24 + 10] = g.x;
+            vertices[i * 24 + 11] = g.y + g.h;
+            vertices[i * 24 + 12] = current_x + g.ox + g.w;
+            vertices[i * 24 + 13] = current_y - g.oy;
+            vertices[i * 24 + 14] = g.x + g.w;
+            vertices[i * 24 + 15] = g.y;
+            vertices[i * 24 + 16] = current_x + g.ox;
+            vertices[i * 24 + 17] = current_y - g.oy - g.h;
+            vertices[i * 24 + 18] = g.x;
+            vertices[i * 24 + 19] = g.y + g.h;
+            vertices[i * 24 + 20] = current_x + g.ox + g.w;
+            vertices[i * 24 + 21] = current_y - g.oy - g.h;
+            vertices[i * 24 + 22] = g.x + g.w;
+            vertices[i * 24 + 23] = g.y + g.h;
+
+            current_x += g.w_space;
+
+            // Consider kernings
+            const char next = str[i + 1];
+            for (const auto& x : g.kernings) {
+                if (x.first == next) {
+                    current_x += x.second;
+                    break;
+                }
+            }
+
+        }
+
+        //float prova[] = {
+        //    x + g.ox, y - g.oy, g.x, g.y,
+        //    x + g.ox + g.w, y - g.oy, g.x + g.w, g.y,
+        //    x + g.ox, y - g.oy - g.h, g.x, g.y + g.h,
+        //    x + g.ox + g.w, y - g.oy, g.x + g.w, g.y,
+        //    x + g.ox, y - g.oy - g.h, g.x, g.y + g.h,
+        //    x + g.ox + g.w, y - g.oy - g.h, g.x + g.w, g.y + g.h,
+        //};
+
+        for (int i = 0; i < len * 24; ) {
+            i += 2;
+            vertices[i++] /= font.texture_width;
+            vertices[i++] /= font.texture_height;
+        }
+
+        // 1. bind Vertex Array Object
+        unsigned int VAO_;
+        unsigned int VBO_;
+        glGenVertexArrays(1, &VAO_);
+        glBindVertexArray(VAO_);
+
+        // 2. copy our vertices array in a buffer for OpenGL to use
+        glGenBuffers(1, &VBO_);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO_);
+        GLenum usage;
+        if (dynamic) {
+            usage = GL_DYNAMIC_DRAW;
+        }
+        else {
+            usage = GL_STATIC_DRAW;
+        }
+        glBufferData(GL_ARRAY_BUFFER, len * 24 * sizeof(float), vertices.data(), usage);
+        //glBufferData(GL_ARRAY_BUFFER, sizeof(prova), prova, GL_STATIC_DRAW);
+
+        // 3. then set our vertex attributes pointers
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(sizeof(float) * 2));
+        glEnableVertexAttribArray(1);
+
+        VAO = VAO_;
+        VBO = VBO_;
+
+        n_vertices = len * 6; // TODO fix this
+    }
+
+    ~Writing() {
+        glDeleteBuffers(1, &VBO);
+        glDeleteVertexArrays(1, &VAO);
+    }
+
+    void Update(const char* str) {
+
+        if (!dynamic) {
+            std::cerr << "Error in Writing::Update: cannot update static writing.\n";
+            return;
+        }
+
+        int len = strlen(str);
+        std::vector<float> vertices = GetStringVertices(str, font);        
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, len * 24 * sizeof(float), vertices.data());
+
+        n_vertices = len * 6;
+    }
+
+    void Render(const Shader& shader, unsigned int texture, int panel_x, int panel_y) const {
+        shader.use();
+
+        glm::mat4 world(1.0f);
+        world = glm::translate(world, glm::vec3(x + panel_x, y + panel_y, 0.f));
+        shader.SetMat4("world", world);
+
+        if (highlighted) {
+            shader.SetVec3("color", highlighted_color);
+        }
+        else {
+            shader.SetVec3("color", normal_color);
+        }
+
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, n_vertices);
+    }
+
+    // Temporarily deleted for safety
+    Writing(const Writing& other) = delete;
+    Writing& operator=(const Writing& other) = delete;
+    Writing& operator=(Writing&& other) = delete;
+
+    Writing(Writing&& other) : 
+        VAO(other.VAO), 
+        VBO(other.VBO),
+        x(other.x), 
+        y(other.y), 
+        n_vertices(other.n_vertices), 
+        highlighted(other.highlighted),
+        font(other.font)
+    {
+        // TODO check this trick
+        other.VAO = -1;
+        other.VBO = -1;
+    }
+
+};
+
+const glm::vec3 Writing::normal_color = glm::vec3(1.f);
+const glm::vec3 Writing::highlighted_color = glm::vec3(1.f, 1.f, 0.f);
+
+struct Panel {
+
+    std::vector<Writing> writings;
+    int x;
+    int y;
+
+    Panel(int x_, int y_) : x(x_), y(y_) {}
+
+    void Render(const Shader& shader, unsigned int texture) const {
+        for (const auto& writing : writings) {
+            writing.Render(shader, texture, x, y);
+        }
+    }
+
+    void AddWriting(const char* str, int x, int y, const Font& font, bool dynamic = false, bool highlighted = false) {
+        writings.emplace_back(str, x, y, font, dynamic, highlighted);
+    }
+
+};
+
+struct UI {
+
+    Shader shader;
+    Font font;
+    std::map<std::string, std::pair<Panel, bool>> panel_map;
+
+    UI() : shader("glyph") {
+        if (!ReadFont("F:/progetti miei/nikman/resources/fonts/centaur_regular_32.xml", font)) {
+            std::cerr << "Error in UI constructor: can't read font!\n";
+        }
+
+        shader.use();
+        glm::mat4 projection = glm::ortho(0.f, (float)kWindowWidth, 0.f, (float)kWindowHeight, 0.1f, 2.f);
+        shader.SetMat4("projection", projection);
+
+        Panel main_menu(500, 800);
+        main_menu.AddWriting("New game", 0, 0, font);
+        main_menu.AddWriting("Quit", 0, -font.h_space, font);
+        AddPanel("main_menu", std::move(main_menu), true);
+
+        Panel end_game(500, 800);
+        end_game.AddWriting("Congratulations! You won!", 0, 0, font, false);
+        end_game.AddWriting("Back to menu", 0, -font.h_space * 3, font, false, true);
+        AddPanel("end_game", std::move(end_game), false);
+
+        Panel game_ui(500, 895);
+        game_ui.AddWriting("Lives: 3", 0, 0, font, true, false);
+        AddPanel("game_ui", std::move(game_ui), false);
+
+    }
+
+    void Render() const {
+        for (const auto& x : panel_map) {
+            if (x.second.second) {
+                x.second.first.Render(shader, font.texture);
+            }
+        }
+    }
+
+    void AddPanel(std::string name, Panel panel, bool active = true) {
+        panel_map.emplace(std::move(name), std::make_pair(std::move(panel), active));
+    }
+
+};
+
+
+
+
+//unsigned int WriteString(const char* str, const Font& font) {
+//
+//    Shader shader("glyph");
+//    shader.use();
+//
+//    glm::mat4 projection = glm::ortho(0.f, (float)kWindowWidth, 0.f, (float)kWindowHeight, 0.1f, 2.f);
+//    shader.SetMat4("projection", projection);
+//
+//    float x = 0;
+//    float y = 100;
+//
+//    const Glyph& g = font.glyphs[33];
+//
+//    float vertices[] = {
+//        x + g.ox, y - g.oy, g.x, g.y,
+//        x + g.ox + g.w, y - g.oy, g.x + g.w, g.y,
+//        x + g.ox, y - g.oy - g.h, g.x, g.y + g.h,
+//        x + g.ox + g.w, y - g.oy, g.x + g.w, g.y,
+//        x + g.ox, y - g.oy - g.h, g.x, g.y + g.h,
+//        x + g.ox + g.w, y - g.oy - g.h, g.x + g.w, g.y + g.h,
+//    };
+//
+//    unsigned int VBO;
+//    unsigned int VAO;
+//
+//    // 1. bind Vertex Array Object
+//    glGenVertexArrays(1, &VAO);
+//    glBindVertexArray(VAO);
+//
+//    // 2. copy our vertices array in a buffer for OpenGL to use
+//    glGenBuffers(1, &VBO);
+//    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+//    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+//
+//    // 3. then set our vertex attributes pointers
+//    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+//    glEnableVertexAttribArray(0);
+//    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(sizeof(float) * 2));
+//    glEnableVertexAttribArray(1);
+//
+//    return VAO;
+//
+//}
+
+
+//struct MainMenu {
+//
+//    Panel panel;
+//    int selected;
+//
+//    MainMenu() : selected(0), panel(500, 800) {
+//
+//        panel.AddWriting("New game", 0, 0, )
+//
+//
+//    }
+//
+//
+//};
+
+
+
+#endif // NIKMAN_UI_H

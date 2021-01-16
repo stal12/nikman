@@ -41,46 +41,6 @@ void MakeRect(float width, float height, unsigned int& VAO, unsigned int& VBO) {
     glEnableVertexAttribArray(1);
 }
 
-
-unsigned int MakeTexture(const char* filename, bool nearest = false, bool alpha = false) {
-    // Texture 
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    // set the texture wrapping/filtering options (on the currently bound texture object)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    GLint interp = nearest ? GL_NEAREST : GL_LINEAR;
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, interp);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, interp);
-
-    // load and generate the texture
-    int width, height, nrChannels;
-
-    std::filesystem::path texture_path = std::filesystem::path(kTextureRoot) / std::filesystem::path(filename);
-    std::string texture_path_string = texture_path.string();
-    const char* texture_path_cstring = texture_path_string.c_str();
-
-    unsigned char* data = stbi_load(texture_path_cstring, &width, &height, &nrChannels, 0);
-    if (data)
-    {
-        //GLenum format = alpha ? GL_RGBA : GL_RGB;
-        GLint internal_format = alpha ? GL_RGBA : GL_RGB;
-        glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
-    else
-    {
-        std::cerr << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
-    return texture;
-}
-
-
-
 struct Slot {
     unsigned char walls = 0;    // wasd 0123
     bool crust = true;
@@ -106,7 +66,8 @@ struct Map {
 
         MakeRect(1.f, 1.f, VAO, VBO);
 
-        texture = MakeTexture("map.png");
+        int width, height;
+        texture = MakeTexture("map.png", width, height);
 
         shader.use();
         glm::mat4 world(1.f);
@@ -198,7 +159,8 @@ struct Wall {
 
         MakeRect(0.2f, 1.2f, VAO, VBO);
 
-        texture = MakeTexture("wall.png");
+        int width, height;
+        texture = MakeTexture("wall.png", width, height);
 
         shader.use();
         glm::mat4 world(1.f);
@@ -296,7 +258,8 @@ struct Player {
 
         MakeRect(0.7f, 0.7f, VAO, VBO);
 
-        texture = MakeTexture("player.png", true, true);
+        int width, height;
+        texture = MakeTexture("player.png", width, height, true, true);
 
         x = 0;
         y = 0;
@@ -465,7 +428,8 @@ struct Crust {
 
         MakeRect(0.2f, 0.4f, VAO, VBO);
 
-        texture = MakeTexture("crust.png", true, true);
+        int width, height;
+        texture = MakeTexture("crust.png", width, height, true, true);
 
         shader.use();
         glm::mat4 world(1.f);
@@ -552,7 +516,8 @@ struct RandomGuy {
 
         MakeRect(0.4f, 0.4f, VAO, VBO);
 
-        texture = MakeTexture("RandomGuy.png", true, true);
+        int width, height;
+        texture = MakeTexture("RandomGuy.png", width, height, true, true);
 
         x = 4;
         y = 4;

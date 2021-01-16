@@ -1,0 +1,445 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Font size="32" family="Centaur" height="49" style="Regular">
+ <Char width="10" offset="0 37" rect="1 33 0 0" code=" ">
+  <Kerning advance="-4" id="T"/>
+  <Kerning advance="-4" id="V"/>
+  <Kerning advance="-4" id="W"/>
+  <Kerning advance="-4" id="Y"/>
+ </Char>
+ <Char width="9" offset="1 12" rect="2 8 7 25" code="!"/>
+ <Char width="18" offset="3 10" rect="10 6 12 12" code="&quot;"/>
+ <Char width="28" offset="1 6" rect="23 2 26 32" code="#"/>
+ <Char width="21" offset="1 8" rect="50 4 18 32" code="$"/>
+ <Char width="35" offset="2 7" rect="69 3 31 32" code="%"/>
+ <Char width="27" offset="1 12" rect="101 8 26 25" code="&amp;"/>
+ <Char width="8" offset="2 10" rect="128 6 4 12" code="'"/>
+ <Char width="14" offset="1 8" rect="133 4 12 41" code="("/>
+ <Char width="14" offset="1 8" rect="146 4 12 41" code=")"/>
+ <Char width="15" offset="0 10" rect="159 6 15 15" code="*"/>
+ <Char width="28" offset="2 10" rect="175 6 24 24" code="+"/>
+ <Char width="8" offset="1 31" rect="200 27 6 11" code=","/>
+ <Char width="13" offset="1 27" rect="207 23 10 3" code="-"/>
+ <Char width="8" offset="1 32" rect="218 28 6 5" code="."/>
+ <Char width="23" offset="1 5" rect="225 1 21 38" code="/"/>
+ <Char width="21" offset="1 10" rect="247 6 19 27" code="0"/>
+ <Char width="21" offset="4 9" rect="267 5 13 28" code="1"/>
+ <Char width="21" offset="0 10" rect="281 6 20 28" code="2"/>
+ <Char width="20" offset="1 10" rect="302 6 17 27" code="3"/>
+ <Char width="21" offset="0 9" rect="320 5 21 29" code="4"/>
+ <Char width="21" offset="2 10" rect="342 6 18 27" code="5"/>
+ <Char width="21" offset="2 9" rect="361 5 17 28" code="6"/>
+ <Char width="21" offset="1 9" rect="379 5 20 29" code="7"/>
+ <Char width="21" offset="2 10" rect="400 6 17 27" code="8"/>
+ <Char width="21" offset="2 10" rect="418 6 17 29" code="9"/>
+ <Char width="8" offset="1 20" rect="436 16 6 17" code=":"/>
+ <Char width="9" offset="1 21" rect="443 17 7 22" code=";"/>
+ <Char width="28" offset="2 11" rect="451 7 24 23" code="&lt;"/>
+ <Char width="28" offset="2 16" rect="476 12 24 12" code="="/>
+ <Char width="28" offset="2 11" rect="1 52 24 23" code=">"/>
+ <Char width="11" offset="1 11" rect="26 52 9 26" code="?"/>
+ <Char width="42" offset="2 5" rect="36 46 39 42" code="@"/>
+ <Char width="27" offset="0 10" rect="76 51 27 28" code="A">
+  <Kerning advance="-2" id="C"/>
+  <Kerning advance="-2" id="G"/>
+  <Kerning advance="-2" id="O"/>
+  <Kerning advance="-2" id="Q"/>
+  <Kerning advance="-4" id="T"/>
+  <Kerning advance="-3" id="U"/>
+  <Kerning advance="-6" id="V"/>
+  <Kerning advance="-6" id="W"/>
+  <Kerning advance="-5" id="Y"/>
+  <Kerning advance="-1" id="p"/>
+  <Kerning advance="-1" id="u"/>
+  <Kerning advance="-3" id="v"/>
+  <Kerning advance="-3" id="w"/>
+  <Kerning advance="-2" id="y"/>
+ </Char>
+ <Char width="22" offset="0 10" rect="104 51 21 27" code="B">
+  <Kerning advance="-1" id="A"/>
+  <Kerning advance="-1" id="U"/>
+ </Char>
+ <Char width="27" offset="2 10" rect="126 51 24 27" code="C"/>
+ <Char width="31" offset="0 10" rect="151 51 29 27" code="D">
+  <Kerning advance="-3" id=","/>
+  <Kerning advance="-3" id="."/>
+  <Kerning advance="-3" id="A"/>
+  <Kerning advance="-3" id="V"/>
+  <Kerning advance="-3" id="W"/>
+  <Kerning advance="-4" id="Y"/>
+ </Char>
+ <Char width="24" offset="0 10" rect="181 51 24 28" code="E"/>
+ <Char width="21" offset="0 9" rect="206 50 21 29" code="F">
+  <Kerning advance="-2" id=","/>
+  <Kerning advance="-3" id="."/>
+  <Kerning advance="-5" id="A"/>
+  <Kerning advance="-1" id="a"/>
+  <Kerning advance="-1" id="e"/>
+  <Kerning advance="-1" id="o"/>
+  <Kerning advance="-1" id="r"/>
+ </Char>
+ <Char width="29" offset="2 10" rect="228 51 27 27" code="G">
+  <Kerning advance="1" id=","/>
+  <Kerning advance="1" id="."/>
+ </Char>
+ <Char width="33" offset="0 9" rect="256 50 32 28" code="H"/>
+ <Char width="13" offset="0 10" rect="289 51 12 27" code="I"/>
+ <Char width="13" offset="-1 10" rect="302 51 13 37" code="J">
+  <Kerning advance="-1" id=","/>
+  <Kerning advance="-2" id="."/>
+  <Kerning advance="-2" id=":"/>
+  <Kerning advance="-2" id=";"/>
+  <Kerning advance="-1" id="A"/>
+  <Kerning advance="-2" id="a"/>
+  <Kerning advance="-2" id="e"/>
+  <Kerning advance="-2" id="o"/>
+  <Kerning advance="-2" id="u"/>
+  <Kerning advance="-1" id="y"/>
+ </Char>
+ <Char width="27" offset="1 9" rect="316 50 26 29" code="K">
+  <Kerning advance="-2" id="C"/>
+  <Kerning advance="-2" id="G"/>
+  <Kerning advance="-2" id="O"/>
+  <Kerning advance="-1" id="e"/>
+  <Kerning advance="-1" id="o"/>
+  <Kerning advance="-1" id="u"/>
+  <Kerning advance="-4" id="v"/>
+  <Kerning advance="-4" id="w"/>
+  <Kerning advance="-3" id="y"/>
+ </Char>
+ <Char width="24" offset="1 9" rect="343 50 23 29" code="L">
+  <Kerning advance="-1" id="C"/>
+  <Kerning advance="-1" id="G"/>
+  <Kerning advance="-1" id="O"/>
+  <Kerning advance="-4" id="T"/>
+  <Kerning advance="-1" id="U"/>
+  <Kerning advance="-7" id="V"/>
+  <Kerning advance="-6" id="W"/>
+  <Kerning advance="-6" id="Y"/>
+  <Kerning advance="-1" id="w"/>
+  <Kerning advance="-2" id="y"/>
+ </Char>
+ <Char width="38" offset="1 10" rect="367 51 36 28" code="M"/>
+ <Char width="33" offset="0 10" rect="404 51 33 27" code="N">
+  <Kerning advance="-1" id=","/>
+  <Kerning advance="-2" id="."/>
+  <Kerning advance="-1" id="A"/>
+ </Char>
+ <Char width="32" offset="2 10" rect="438 51 28 27" code="O">
+  <Kerning advance="-2" id=","/>
+  <Kerning advance="-2" id="."/>
+  <Kerning advance="-2" id="A"/>
+  <Kerning advance="-1" id="T"/>
+  <Kerning advance="-3" id="V"/>
+  <Kerning advance="-3" id="W"/>
+  <Kerning advance="-3" id="X"/>
+  <Kerning advance="-3" id="Y"/>
+ </Char>
+ <Char width="22" offset="0 10" rect="467 51 21 27" code="P">
+  <Kerning advance="-6" id=","/>
+  <Kerning advance="-6" id="."/>
+  <Kerning advance="-4" id="A"/>
+  <Kerning advance="-2" id="a"/>
+  <Kerning advance="-2" id="e"/>
+  <Kerning advance="-2" id="o"/>
+ </Char>
+ <Char width="32" offset="2 10" rect="1 94 33 32" code="Q">
+  <Kerning advance="5" id=","/>
+  <Kerning advance="1" id="."/>
+  <Kerning advance="-2" id="A"/>
+  <Kerning advance="-1" id="T"/>
+  <Kerning advance="-1" id="U"/>
+  <Kerning advance="-3" id="V"/>
+  <Kerning advance="-3" id="W"/>
+  <Kerning advance="-3" id="Y"/>
+ </Char>
+ <Char width="29" offset="1 10" rect="35 94 28 28" code="R">
+  <Kerning advance="-4" id="C"/>
+  <Kerning advance="-4" id="G"/>
+  <Kerning advance="-4" id="O"/>
+  <Kerning advance="-4" id="Q"/>
+  <Kerning advance="-5" id="T"/>
+  <Kerning advance="-4" id="U"/>
+  <Kerning advance="-6" id="V"/>
+  <Kerning advance="-6" id="W"/>
+  <Kerning advance="-6" id="Y"/>
+  <Kerning advance="-2" id="e"/>
+  <Kerning advance="-3" id="o"/>
+  <Kerning advance="-2" id="u"/>
+  <Kerning advance="-4" id="v"/>
+  <Kerning advance="-3" id="w"/>
+  <Kerning advance="-3" id="y"/>
+ </Char>
+ <Char width="20" offset="0 10" rect="64 94 19 27" code="S">
+  <Kerning advance="-1" id=","/>
+  <Kerning advance="1" id="."/>
+ </Char>
+ <Char width="28" offset="0 9" rect="84 93 28 28" code="T">
+  <Kerning advance="-6" id=","/>
+  <Kerning advance="-5" id="-"/>
+  <Kerning advance="-6" id="."/>
+  <Kerning advance="-2" id=":"/>
+  <Kerning advance="-2" id=";"/>
+  <Kerning advance="-4" id="A"/>
+  <Kerning advance="-1" id="C"/>
+  <Kerning advance="-1" id="G"/>
+  <Kerning advance="-1" id="O"/>
+  <Kerning advance="-1" id="Q"/>
+  <Kerning advance="-5" id="a"/>
+  <Kerning advance="-5" id="c"/>
+  <Kerning advance="-5" id="e"/>
+  <Kerning advance="1" id="h"/>
+  <Kerning advance="-1" id="i"/>
+  <Kerning advance="1" id="l"/>
+  <Kerning advance="-3" id="m"/>
+  <Kerning advance="-5" id="o"/>
+  <Kerning advance="-4" id="r"/>
+  <Kerning advance="-4" id="s"/>
+  <Kerning advance="-5" id="u"/>
+  <Kerning advance="-6" id="w"/>
+  <Kerning advance="-6" id="y"/>
+  <Kerning advance="-4" id="z"/>
+ </Char>
+ <Char width="31" offset="0 10" rect="113 94 30 27" code="U">
+  <Kerning advance="-3" id=","/>
+  <Kerning advance="-3" id="."/>
+  <Kerning advance="-2" id="A"/>
+ </Char>
+ <Char width="30" offset="0 9" rect="144 93 31 29" code="V">
+  <Kerning advance="-6" id=","/>
+  <Kerning advance="-6" id="-"/>
+  <Kerning advance="-8" id="."/>
+  <Kerning advance="-3" id=":"/>
+  <Kerning advance="-3" id=";"/>
+  <Kerning advance="-6" id="A"/>
+  <Kerning advance="-2" id="C"/>
+  <Kerning advance="-2" id="G"/>
+  <Kerning advance="-2" id="O"/>
+  <Kerning advance="-2" id="Q"/>
+  <Kerning advance="-6" id="a"/>
+  <Kerning advance="-6" id="e"/>
+  <Kerning advance="-3" id="i"/>
+  <Kerning advance="-6" id="o"/>
+  <Kerning advance="-3" id="r"/>
+  <Kerning advance="-3" id="u"/>
+  <Kerning advance="-3" id="y"/>
+ </Char>
+ <Char width="42" offset="0 10" rect="176 94 42 28" code="W">
+  <Kerning advance="6" id=","/>
+  <Kerning advance="-5" id="-"/>
+  <Kerning advance="-6" id="."/>
+  <Kerning advance="-2" id=":"/>
+  <Kerning advance="-2" id=";"/>
+  <Kerning advance="-5" id="A"/>
+  <Kerning advance="-2" id="C"/>
+  <Kerning advance="-2" id="G"/>
+  <Kerning advance="-2" id="O"/>
+  <Kerning advance="-5" id="a"/>
+  <Kerning advance="-5" id="d"/>
+  <Kerning advance="-5" id="e"/>
+  <Kerning advance="1" id="h"/>
+  <Kerning advance="-2" id="i"/>
+  <Kerning advance="-5" id="o"/>
+  <Kerning advance="-3" id="r"/>
+  <Kerning advance="-4" id="u"/>
+  <Kerning advance="-3" id="y"/>
+ </Char>
+ <Char width="29" offset="0 9" rect="219 93 29 29" code="X">
+  <Kerning advance="-2" id="C"/>
+  <Kerning advance="-2" id="G"/>
+  <Kerning advance="-2" id="O"/>
+ </Char>
+ <Char width="28" offset="0 10" rect="249 94 28 27" code="Y">
+  <Kerning advance="-5" id=","/>
+  <Kerning advance="-6" id="-"/>
+  <Kerning advance="-5" id="."/>
+  <Kerning advance="-2" id=":"/>
+  <Kerning advance="-2" id=";"/>
+  <Kerning advance="-5" id="A"/>
+  <Kerning advance="-2" id="C"/>
+  <Kerning advance="-2" id="G"/>
+  <Kerning advance="-2" id="O"/>
+  <Kerning advance="-1" id="S"/>
+  <Kerning advance="-5" id="a"/>
+  <Kerning advance="-6" id="d"/>
+  <Kerning advance="-6" id="e"/>
+  <Kerning advance="-2" id="i"/>
+  <Kerning advance="-6" id="o"/>
+  <Kerning advance="-4" id="p"/>
+  <Kerning advance="-6" id="q"/>
+  <Kerning advance="-5" id="u"/>
+  <Kerning advance="-6" id="v"/>
+ </Char>
+ <Char width="27" offset="0 10" rect="278 94 27 27" code="Z"/>
+ <Char width="13" offset="2 8" rect="306 92 10 41" code="["/>
+ <Char width="23" offset="1 5" rect="317 89 21 38" code="\"/>
+ <Char width="13" offset="1 8" rect="339 92 9 41" code="]"/>
+ <Char width="21" offset="0 10" rect="349 94 21 16" code="^"/>
+ <Char width="22" offset="0 39" rect="371 123 22 3" code="_"/>
+ <Char width="14" offset="3 10" rect="394 94 8 8" code="`"/>
+ <Char width="16" offset="2 21" rect="403 105 15 16" code="a">
+  <Kerning advance="-1" id="v"/>
+  <Kerning advance="-1" id="w"/>
+  <Kerning advance="-1" id="y"/>
+ </Char>
+ <Char width="20" offset="0 8" rect="419 92 19 29" code="b">
+  <Kerning advance="-2" id=","/>
+  <Kerning advance="-2" id="."/>
+  <Kerning advance="-1" id="l"/>
+  <Kerning advance="-1" id="u"/>
+  <Kerning advance="-2" id="v"/>
+  <Kerning advance="-1" id="w"/>
+  <Kerning advance="-1" id="y"/>
+ </Char>
+ <Char width="16" offset="2 21" rect="439 105 14 16" code="c">
+  <Kerning advance="-1" id="h"/>
+  <Kerning advance="-1" id="k"/>
+  <Kerning advance="-1" id="l"/>
+  <Kerning advance="1" id="y"/>
+ </Char>
+ <Char width="22" offset="2 8" rect="454 92 19 30" code="d">
+  <Kerning advance="-1" id="v"/>
+  <Kerning advance="-1" id="w"/>
+  <Kerning advance="-1" id="y"/>
+ </Char>
+ <Char width="16" offset="2 21" rect="474 105 13 16" code="e">
+  <Kerning advance="-1" id="b"/>
+  <Kerning advance="1" id="g"/>
+  <Kerning advance="1" id="p"/>
+  <Kerning advance="-1" id="v"/>
+  <Kerning advance="-1" id="x"/>
+  <Kerning advance="1" id="z"/>
+ </Char>
+ <Char width="13" offset="0 8" rect="488 92 17 29" code="f">
+  <Kerning advance="4" id=" "/>
+  <Kerning advance="4" id="!"/>
+  <Kerning advance="-1" id=","/>
+  <Kerning advance="-1" id="."/>
+  <Kerning advance="6" id="?"/>
+  <Kerning advance="-1" id="a"/>
+  <Kerning advance="-1" id="e"/>
+  <Kerning advance="-1" id="i"/>
+  <Kerning advance="1" id="k"/>
+  <Kerning advance="-1" id="o"/>
+ </Char>
+ <Char width="18" offset="1 21" rect="1 150 17 28" code="g">
+  <Kerning advance="1" id=","/>
+  <Kerning advance="-1" id="."/>
+  <Kerning advance="-1" id="a"/>
+  <Kerning advance="-1" id="e"/>
+  <Kerning advance="-1" id="l"/>
+  <Kerning advance="-1" id="o"/>
+  <Kerning advance="1" id="r"/>
+  <Kerning advance="2" id="y"/>
+ </Char>
+ <Char width="20" offset="0 7" rect="19 136 20 30" code="h">
+  <Kerning advance="-2" id="y"/>
+ </Char>
+ <Char width="10" offset="1 11" rect="40 140 9 26" code="i">
+  <Kerning advance="-1" id="v"/>
+ </Char>
+ <Char width="9" offset="0 11" rect="50 140 7 39" code="j"/>
+ <Char width="20" offset="0 8" rect="58 137 20 30" code="k">
+  <Kerning advance="-1" id="e"/>
+  <Kerning advance="-1" id="o"/>
+ </Char>
+ <Char width="10" offset="0 8" rect="79 137 11 30" code="l">
+  <Kerning advance="-1" id="w"/>
+  <Kerning advance="-1" id="y"/>
+ </Char>
+ <Char width="30" offset="1 21" rect="91 150 30 16" code="m">
+  <Kerning advance="-1" id="y"/>
+ </Char>
+ <Char width="21" offset="1 21" rect="122 150 20 17" code="n">
+  <Kerning advance="-2" id="v"/>
+  <Kerning advance="-1" id="y"/>
+ </Char>
+ <Char width="20" offset="2 21" rect="143 150 17 16" code="o">
+  <Kerning advance="-1" id=","/>
+  <Kerning advance="-1" id="."/>
+  <Kerning advance="-1" id="e"/>
+  <Kerning advance="-2" id="v"/>
+  <Kerning advance="-2" id="w"/>
+  <Kerning advance="-2" id="x"/>
+  <Kerning advance="-1" id="y"/>
+  <Kerning advance="-1" id="z"/>
+ </Char>
+ <Char width="21" offset="0 19" rect="161 148 20 30" code="p">
+  <Kerning advance="-1" id=","/>
+  <Kerning advance="-1" id="."/>
+  <Kerning advance="-2" id="w"/>
+  <Kerning advance="-2" id="y"/>
+  <Kerning advance="-1" id="z"/>
+ </Char>
+ <Char width="21" offset="2 21" rect="182 150 19 28" code="q"/>
+ <Char width="14" offset="1 20" rect="202 149 13 17" code="r">
+  <Kerning advance="-1" id=","/>
+  <Kerning advance="-1" id="-"/>
+  <Kerning advance="-1" id="."/>
+  <Kerning advance="2" id=":"/>
+  <Kerning advance="2" id=";"/>
+  <Kerning advance="-1" id="c"/>
+  <Kerning advance="-1" id="d"/>
+  <Kerning advance="-1" id="e"/>
+  <Kerning advance="-1" id="g"/>
+  <Kerning advance="1" id="j"/>
+  <Kerning advance="-1" id="l"/>
+  <Kerning advance="2" id="m"/>
+  <Kerning advance="2" id="n"/>
+  <Kerning advance="-1" id="o"/>
+  <Kerning advance="1" id="p"/>
+  <Kerning advance="-1" id="q"/>
+  <Kerning advance="2" id="t"/>
+  <Kerning advance="1" id="u"/>
+  <Kerning advance="1" id="v"/>
+  <Kerning advance="1" id="y"/>
+ </Char>
+ <Char width="14" offset="1 21" rect="216 150 12 16" code="s">
+  <Kerning advance="-1" id="w"/>
+ </Char>
+ <Char width="13" offset="0 17" rect="229 146 13 20" code="t"/>
+ <Char width="20" offset="0 21" rect="243 150 20 17" code="u"/>
+ <Char width="17" offset="0 20" rect="264 149 17 18" code="v">
+  <Kerning advance="-3" id=","/>
+  <Kerning advance="-3" id="."/>
+  <Kerning advance="-1" id="a"/>
+  <Kerning advance="-1" id="c"/>
+  <Kerning advance="-1" id="d"/>
+  <Kerning advance="-1" id="e"/>
+  <Kerning advance="-1" id="o"/>
+  <Kerning advance="-1" id="q"/>
+ </Char>
+ <Char width="26" offset="0 20" rect="282 149 26 17" code="w">
+  <Kerning advance="-3" id=","/>
+  <Kerning advance="-3" id="."/>
+  <Kerning advance="-1" id="a"/>
+  <Kerning advance="-1" id="c"/>
+  <Kerning advance="-1" id="d"/>
+  <Kerning advance="-1" id="e"/>
+  <Kerning advance="-1" id="h"/>
+  <Kerning advance="-1" id="o"/>
+  <Kerning advance="-1" id="q"/>
+ </Char>
+ <Char width="18" offset="1 21" rect="309 150 17 17" code="x">
+  <Kerning advance="-1" id="c"/>
+  <Kerning advance="-1" id="d"/>
+  <Kerning advance="-1" id="e"/>
+  <Kerning advance="-1" id="o"/>
+ </Char>
+ <Char width="18" offset="0 21" rect="327 150 18 28" code="y">
+  <Kerning advance="-2" id=","/>
+  <Kerning advance="-2" id="."/>
+  <Kerning advance="-1" id="a"/>
+  <Kerning advance="-1" id="c"/>
+  <Kerning advance="-1" id="d"/>
+  <Kerning advance="-1" id="e"/>
+  <Kerning advance="-1" id="g"/>
+  <Kerning advance="-1" id="o"/>
+ </Char>
+ <Char width="17" offset="0 20" rect="346 149 18 17" code="z">
+  <Kerning advance="-1" id="c"/>
+ </Char>
+ <Char width="22" offset="5 10" rect="365 139 12 39" code="{"/>
+ <Char width="22" offset="10 5" rect="378 134 2 38" code="|"/>
+ <Char width="22" offset="5 10" rect="381 139 12 39" code="}"/>
+ <Char width="28" offset="2 18" rect="394 147 24 7" code="~"/>
+</Font>
