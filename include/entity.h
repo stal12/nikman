@@ -43,7 +43,7 @@ void MakeRect(float width, float height, unsigned int& VAO, unsigned int& VBO) {
 
 struct Slot {
     // Default data is just a crust
-    unsigned char data = 16;    // wasd 0123 crust 4 weapon 5 home 6 teleport 7
+    unsigned short data = 16;    // wasd walls 0 1 2 3 crust 4 weapon 5 home 6 teleport 7 dir 8 9 10 11
 
     bool Crust() const {
         return data & 16;
@@ -61,9 +61,13 @@ struct Slot {
         return data & 128;
     }
 
+    unsigned char Direction() const {
+        return (data & (256 + 512 + 1024 + 2048)) >> 8;
+    }
+
     void SetCrust() {
         data |= 16;
-    }    
+    }
 
     void RemoveCrust() {
         data &= ~16;
@@ -91,6 +95,11 @@ struct Slot {
 
     void RemoveTeleport() {
         data &= ~128;
+    }
+
+    // dir is a 2-bit value: 0 w 1 a 2 s 3 d
+    void SetDirection(unsigned char dir) {
+        data = (data & ~(512 + 256 + 1024 + 2048)) | (dir << 8);
     }
 
     Slot() {}
@@ -190,9 +199,9 @@ struct Map {
 
         FillWalls(level.ver_walls, level.hor_walls);
         remaining_crusts = h * w - 1 -
-            level.weapons.size() - 
-            level.pumpkin_home.size() - 
-            level.mud.size() - 
+            level.weapons.size() -
+            level.pumpkin_home.size() -
+            level.mud.size() -
             level.teleports.size() -
             level.empty.size();
 
@@ -466,6 +475,13 @@ struct Player {
         }
     }
 
+    unsigned char DirTo2Bit(unsigned char dir) {
+        if (dir == 1) return 0;
+        else if (dir == 2) return 1;
+        else if (dir == 4) return 2;
+        else return 3;
+    }
+
     void Update(float delta, unsigned int wasd, unsigned int& eaten, bool& weapon) {
 
         if (just_hit) {
@@ -481,7 +497,8 @@ struct Player {
                 direction = ((direction >> 2) | ((direction << 2) & 15));
                 std::swap(x, next_x);
                 std::swap(y, next_y);
-                t = 1 - t;
+                t = 1.f - t;
+                grid[y * w + x].SetDirection(DirTo2Bit(direction));
             }
             if (t >= 1.f) {
                 x = next_x;
@@ -497,11 +514,13 @@ struct Player {
                 }
                 t -= 1.f;
                 FindNext(wasd);
+                grid[y * w + x].SetDirection(direction);
             }
         }
         else {
+            t = 0.f;
             FindNext(wasd);
-            t = 0;
+            grid[y * w + x].SetDirection(direction);
         }
 
         precise_x = (x * (1 - t) + next_x * t);
@@ -947,18 +966,18 @@ struct RandomGuy {
 
 struct Ghost {
 
-    enum class Color { Red, Yellow, Blue, Pink };
+    enum class Color { Red, Yellow, Blue, Brown, Purple };
     enum class State { Chase, Scatter, Frightened, Home };
 
-    static const char* const texture_array[4];
-    static const float speed_array[4];
+    static const char* const texture_array[5];
+    static const float speed_array[5];
 
     const int size = 1;
 
     unsigned int VBO;
     unsigned int VAO;
     unsigned int texture;
-    Shader shader;
+    static Shader shader;
     int h;
     int w;
 
@@ -985,19 +1004,16 @@ struct Ghost {
     std::vector<Slot>& grid;
     Teleport& teleport;
 
-    std::random_device rd;
-    std::mt19937 mt;
+    std::mt19937& mt;
 
-
-    Ghost(Color color_, int h_, int w_, std::vector<Slot>& grid_, Teleport& teleport_) :
-        shader("ghost"),
+    Ghost(Color color_, int h_, int w_, std::vector<Slot>& grid_, Teleport& teleport_, std::mt19937& mt_) :
         color(color_),
         state(State::Home),
-        speed(speed_array[static_cast<int>(color_)] * 0.5f),
+        speed(speed_array[static_cast<int>(color_)] * 2.0f),
         h(h_),
         w(w_),
         grid(grid_),
-        mt(rd()),
+        mt(mt_),
         teleport(teleport_)
     {
 
@@ -1013,6 +1029,7 @@ struct Ghost {
         direction = 2;  // A
 
         shader.use();
+        GLenum gl_error = glGetError();
         glm::mat4 world(1.f);
         world = glm::translate(world, glm::vec3(
             -w / 2.f + size / 2.f + size * (x * (1 - t) + next_x * t),
@@ -1023,6 +1040,48 @@ struct Ghost {
         shader.SetMat4("world", world);
         shader.SetMat4("projection", kProjection);
 
+    }
+
+    Ghost(const Ghost& other) = delete;
+    Ghost& operator=(const Ghost& other) = delete;
+    Ghost& operator=(Ghost&& other) = delete;
+
+    Ghost(Ghost&& other) :
+        size(other.size),
+        VBO(other.VBO),
+        VAO(other.VAO),
+        texture(other.texture),
+        h(other.h),
+        w(other.w),
+        x(other.x),
+        y(other.y),
+        next_x(other.next_x),
+        next_y(other.next_y),
+        precise_x(other.precise_x),
+        precise_y(other.precise_y),
+        home_x(other.home_x),
+        home_y(other.home_y),
+        t(other.t),
+        speed(other.speed),
+        direction(other.direction),
+        color(other.color),
+        state(other.state),
+        target_x(other.target_x),
+        target_y(other.target_y),
+        scatter_x(other.scatter_x),
+        scatter_y(other.scatter_y),
+        state_t(other.state_t),
+        scatter_duration(other.scatter_duration),
+        chase_duration(other.chase_duration),
+        frightened_duration(other.frightened_duration),
+        home_duration(other.home_duration),
+        just_teleported(other.just_teleported),
+        grid(other.grid),
+        teleport(other.teleport),
+        mt(other.mt) {
+        other.VAO = -1;
+        other.VBO = -1;
+        // TODO: check this trick
     }
 
     ~Ghost() {
@@ -1069,6 +1128,25 @@ struct Ghost {
 
         direction = min_direction;
 
+    }
+
+    // Update current direction with a random one
+    void RandomDirection(unsigned char possible_dirs_without_back, unsigned char n_dirs) {
+        std::uniform_int_distribution dist(0, n_dirs - 1);
+        int random_int = dist(mt);
+
+        int i;
+        for (i = 0; i < 4; ++i) {
+            if (!(possible_dirs_without_back & (1 << i))) {
+                continue;
+            }
+            if (random_int == 0) {
+                break;
+            }
+            random_int--;
+        }
+
+        direction = (1 << i);
     }
 
     void SetNewDir(float player_x, float player_y, unsigned char player_dir, float red_x, float red_y) {
@@ -1141,12 +1219,24 @@ struct Ghost {
                 else if (state == State::Chase) {
                     // Determine target tile and approach it
 
-                    // Red ghost example
-                    if (color == Color::Red) {
+                    if (color == Color::Purple) {
+
+                        unsigned char player_dir = grid[y * w + x].Direction();
+                        if (player_dir & possible_dirs_without_back) {
+                            direction = player_dir;
+                        }
+                        else {
+                            RandomDirection(possible_dirs_without_back, n_dirs);
+                        }
+
+                        return; // and do not call TargetTileDirection()
+                    }
+
+                    else if (color == Color::Red) {
                         target_x = player_x;
                         target_y = player_y;
                     }
-                    else if (color == Color::Pink) {
+                    else if (color == Color::Brown) {
                         if (player_dir & 1) {
                             target_x = player_x;
                             target_y = player_y + 4;
@@ -1323,7 +1413,7 @@ struct Ghost {
         w = level.w;
         home_x = level.pumpkin_home.front().first;
         home_y = level.pumpkin_home.front().second;
-        x = home_x;   // TODO: implement enemy beginning
+        x = home_x;
         y = home_y;
         next_x = x;
         next_y = y;
@@ -1345,7 +1435,7 @@ struct Ghost {
             scatter_x = -1;
             scatter_y = h;
         }
-        else if (color == Color::Pink) {
+        else if (color == Color::Brown) {
             scatter_x = w;
             scatter_y = h;
         }
@@ -1366,7 +1456,8 @@ struct Ghost {
 
 };
 
-const char* const Ghost::texture_array[4] = { "ghost_red.png", "ghost_yellow.png" , "ghost_blue.png" , "ghost_pink.png" };
-const float Ghost::speed_array[4] = { 2.f, 1.9f, 1.8f, 1.7f };
+const char* const Ghost::texture_array[5] = { "ghost_red.png", "ghost_yellow.png" , "ghost_blue.png" , "ghost_brown.png", "ghost_purple.png" };
+const float Ghost::speed_array[5] = { 2.f, 1.9f, 1.8f, 1.7f, 1.6f };
+Shader Ghost::shader;
 
 #endif

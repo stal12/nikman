@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <random>
 
 #include "entity.h"
 #include "level.h"
@@ -16,16 +17,19 @@ struct Game {
     std::vector<std::string> level_filenames;
     int current_level = 0;
 
+    static const std::vector<Ghost::Color> ghost_colors;
+
     Map map;
     Crust crust;
     Weapon weapon;
     Player player;
     Wall wall;
     Teleport teleport;
-    Ghost red;
-    Ghost yellow;
-    Ghost blue;
-    Ghost pink;
+    //Ghost red;
+    //Ghost yellow;
+    //Ghost blue;
+    //Ghost brown;
+    std::vector<Ghost> ghosts;
     UI ui;
     GameState state;
     unsigned int prev_wasd = 0;
@@ -34,18 +38,22 @@ struct Game {
     const float kTransitionDuration = 2.f;
     float transition_t;
 
+    std::random_device rd;
+    std::mt19937 mt;
+
     Game(const LevelDesc& level) :
         state(GameState::MainMenu),
+        mt(rd()),
         map(level.h, level.w, level),
         wall(level.h, level.w, level),
         crust(level.h, level.w, map.grid),
         teleport(level.h, level.w, map.grid),
         weapon(level.h, level.w, map.grid),
-        player(level.h, level.w, map.grid, teleport),
-        red(Ghost::Color::Red, level.h, level.w, map.grid, teleport),
-        yellow(Ghost::Color::Yellow, level.h, level.w, map.grid, teleport),
-        blue(Ghost::Color::Blue, level.h, level.w, map.grid, teleport),
-        pink(Ghost::Color::Pink, level.h, level.w, map.grid, teleport)
+        player(level.h, level.w, map.grid, teleport)
+        //red(Ghost::Color::Red, level.h, level.w, map.grid, teleport),
+        //yellow(Ghost::Color::Yellow, level.h, level.w, map.grid, teleport),
+        //blue(Ghost::Color::Blue, level.h, level.w, map.grid, teleport),
+        //brown(Ghost::Color::Brown, level.h, level.w, map.grid, teleport)
     {
         level_filenames = {
             //"pacman.txt",
@@ -55,6 +63,11 @@ struct Game {
             //"level2.txt",
             //"level3.txt",
         };
+
+        Ghost::shader = Shader("ghost");
+        for (const auto color : ghost_colors) {
+            ghosts.emplace_back(color, level.h, level.w, map.grid, teleport, mt);
+        }
 
         LoadLevel(level_filenames[current_level].c_str());
 
@@ -69,6 +82,10 @@ struct Game {
         ui.panel_map.at("main_menu").first.writings[main_menu_selected].highlighted = true;
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    }
+
+    ~Game() {
+        Ghost::shader.Release();
     }
 
     // wasd is a bitmapped value containing the keys pressed
@@ -91,45 +108,34 @@ struct Game {
             unsigned int eaten;
             bool grab_weapon = false;
             player.Update(delta, wasd, eaten, grab_weapon);
-            bool hit_red = false;
-            bool hit_yellow = false;
-            bool hit_blue = false;
-            bool hit_pink = false;
-            red.Update(delta, player.precise_x, player.precise_y, player.direction, red.precise_x, red.precise_y, hit_red);
-            yellow.Update(delta, player.precise_x, player.precise_y, player.direction, red.precise_x, red.precise_y, hit_yellow);
-            blue.Update(delta, player.precise_x, player.precise_y, player.direction, red.precise_x, red.precise_y, hit_blue);
-            pink.Update(delta, player.precise_x, player.precise_y, player.direction, red.precise_x, red.precise_y, hit_pink);
-            bool hit_player = hit_red || hit_yellow || hit_blue || hit_pink;
 
-            if (hit_player) {
-                if (weapon.player_armed) {
-                    if (hit_red) {
-                        red.Killed();
+            bool hit_player = false;
+            for (auto& ghost : ghosts) {
+                bool hit_ghost = false;
+                ghost.Update(delta, player.precise_x, player.precise_y, player.direction, ghosts[0].precise_x, ghosts[0].precise_y, hit_ghost);
+                if (hit_ghost) {
+                    if (weapon.player_armed) {
+                        ghost.Killed();
                     }
-                    else if (hit_yellow) {
-                        yellow.Killed();
+                    else {
+                        hit_player = true;
                     }
-                    else if (hit_blue) {
-                        blue.Killed();
-                    }
-                    else if (hit_pink) {
-                        pink.Killed();
-                    }
-                }
-                else if (!player.just_hit) {
-                    player.just_hit = true;
-                    player.time_after_hit = 0;
-                    player.lives--;
-                    char str[] = "Lives: x";
-                    str[7] = '0' + player.lives;
-                    ui.panel_map.at("game_ui").first.writings[0].Update(str);
                 }
             }
 
-            if (player.lives <= 0) {
-                state = GameState::Over;
-                ui.panel_map.at("game_over").second = true;
-                ui.panel_map.at("game_ui").second = false;
+            if (hit_player && !player.just_hit) {
+                player.just_hit = true;
+                player.time_after_hit = 0;
+                player.lives--;
+                char str[] = "Lives: x";
+                str[7] = '0' + player.lives;
+                ui.panel_map.at("game_ui").first.writings[0].Update(str);
+
+                if (player.lives <= 0) {
+                    state = GameState::Over;
+                    ui.panel_map.at("game_over").second = true;
+                    ui.panel_map.at("game_ui").second = false;
+                }
             }
 
             map.remaining_crusts -= eaten;
@@ -154,10 +160,9 @@ struct Game {
 
             if (grab_weapon) {
                 weapon.SetPlayerArmed();
-                red.Frighten();
-                yellow.Frighten();
-                blue.Frighten();
-                pink.Frighten();
+                for (auto& ghost : ghosts) {
+                    ghost.Frighten();
+                }
             }
             if (weapon.player_armed) {
                 weapon.Update(delta, player.precise_x, player.precise_y);
@@ -289,10 +294,9 @@ struct Game {
             crust.Render();
             player.Render();
             weapon.Render();
-            red.Render();
-            yellow.Render();
-            blue.Render();
-            pink.Render();
+            for (const auto& ghost : ghosts) {
+                ghost.Render();
+            }
         }
 
         glEnable(GL_BLEND);
@@ -310,16 +314,15 @@ struct Game {
         player.LoadLevel(level);
         crust.LoadLevel(level);
         weapon.LoadLevel(level);
-        red.LoadLevel(level);
-        yellow.LoadLevel(level);
-        blue.LoadLevel(level);
-        pink.LoadLevel(level);
-
+        for (auto& ghost : ghosts) {
+            ghost.LoadLevel(level);
+        }
     }
 
 };
 
-
+const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Yellow, Ghost::Color::Blue, Ghost::Color::Brown, Ghost::Color::Purple };
+//const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Purple };
 
 
 #endif // NIKMAN_GAME_H

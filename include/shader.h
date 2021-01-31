@@ -95,7 +95,10 @@ unsigned int CreateShader(const char* filename, ShaderType type = ShaderType::No
 
 struct Shader {
 
-    unsigned int program;
+    unsigned int program = -1;
+    bool valid = false;
+
+    Shader() {}
 
     Shader(const char* vertex_file, const char* fragment_file, const char* geometry_file = nullptr) {
 
@@ -126,6 +129,7 @@ struct Shader {
             glDeleteShader(geometry);
         }
 
+        valid = true;
     }
 
     Shader(const char* prefix, bool geometry = false) : Shader(
@@ -133,12 +137,29 @@ struct Shader {
         (prefix + std::string(".frag")).c_str(),
         geometry ? (prefix + std::string(".geom")).c_str() : nullptr) {}
 
+    Shader(const Shader& other) = delete;
+    Shader& operator=(const Shader& other) = delete;
+    Shader& operator=(Shader&& other) {
+        program = other.program;
+        valid = other.valid;
+        other.program = -1;     // TODO check this trick
+        other.valid = false;
+        return *this;
+    }
+
     void use() const {
         glUseProgram(program);
     }
 
+    void Release() {
+        if (valid) {
+            glDeleteProgram(program);
+            valid = false;
+        }
+    }
+
     ~Shader() {
-        glDeleteProgram(program);
+        Release();
     }
 
     void SetMat4(const char* key, const glm::mat4& value) const {
