@@ -14,14 +14,17 @@ struct LevelDesc {
     std::vector<std::pair<int, int>> ver_walls;
     std::vector<std::pair<int, int>> hor_walls;
     std::pair<int, int> player_pos;
-    std::vector<std::pair<int, int>> hammers;
+    std::vector<std::pair<int, int>> weapons;
     std::vector<std::pair<int, int>> pumpkin_home;
+    std::vector<std::pair<int, int>> mud;
+    std::vector<std::pair<int, int>> empty;
+    std::vector<std::pair<int, int>> teleports;
 
 };
 
 LevelDesc ReadLevelDesc(const char* filename) {
 
-#define INVALID_FORMAT    { std::cerr << "Error in ReadLevelDesc: invalid format.\n";    return level; }
+#define INVALID_FORMAT    { std::cerr << "Error in ReadLevelDesc: invalid format.\n";  return level; }
 #define EXPECT_CHAR(c)  { if (is.get() != (c)) INVALID_FORMAT }
 
     LevelDesc level;
@@ -30,10 +33,16 @@ LevelDesc ReadLevelDesc(const char* filename) {
         switch (c) {
         case 'n':
             level.player_pos = std::make_pair(x, y);    break;
+        case 'w':
+            level.weapons.emplace_back(x, y);   break;
         case 'h':
-            level.hammers.emplace_back(x, y);   break;
-        case 'e':
             level.pumpkin_home.emplace_back(x, y);  break;
+        case 'm':
+            level.mud.emplace_back(x, y);  break;
+        case 'e':
+            level.empty.emplace_back(x, y);  break;
+        case 't':
+            level.teleports.emplace_back(x, y);  break;
         case ' ':
             break;
         default:

@@ -13,7 +13,7 @@ static constexpr char* const kTextureRoot = "../resources";
 static constexpr char* const kLevelRoot = "../resources/levels";
 
 static constexpr float kRatio = 16.f / 9.f;
-static constexpr float kWorldHeight = 6.f;  // It shall be higher in production
+static constexpr float kWorldHeight = 11.f;  // It shall be higher in production
 static constexpr float kWorldWidth = kWorldHeight * kRatio;
 static constexpr int kWindowWidth = 1600;
 static constexpr int kWindowHeight = kWindowWidth / kRatio;

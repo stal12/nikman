@@ -9,7 +9,7 @@
 #include "utility.h"
 #include "ui.h"
 
-enum class GameState { MainMenu, Game, End };
+enum class GameState { MainMenu, Game, End, Over, Pause, Transition };
 
 struct Game {
 
@@ -18,26 +18,42 @@ struct Game {
 
     Map map;
     Crust crust;
+    Weapon weapon;
     Player player;
     Wall wall;
-    RandomGuy random_guy;
+    Teleport teleport;
+    Ghost red;
+    Ghost yellow;
+    Ghost blue;
+    Ghost pink;
     UI ui;
     GameState state;
     unsigned int prev_wasd = 0;
     int main_menu_selected = 0;
+    int pause_menu_selected = 0;
+    const float kTransitionDuration = 2.f;
+    float transition_t;
 
     Game(const LevelDesc& level) :
         state(GameState::MainMenu),
         map(level.h, level.w, level),
         wall(level.h, level.w, level),
         crust(level.h, level.w, map.grid),
-        player(level.h, level.w, map.grid),
-        random_guy(level.h, level.w, map.grid)
+        teleport(level.h, level.w, map.grid),
+        weapon(level.h, level.w, map.grid),
+        player(level.h, level.w, map.grid, teleport),
+        red(Ghost::Color::Red, level.h, level.w, map.grid, teleport),
+        yellow(Ghost::Color::Yellow, level.h, level.w, map.grid, teleport),
+        blue(Ghost::Color::Blue, level.h, level.w, map.grid, teleport),
+        pink(Ghost::Color::Pink, level.h, level.w, map.grid, teleport)
     {
         level_filenames = {
-            "level.txt",
-            "level2.txt",
-            "level3.txt",
+            //"pacman.txt",
+            //"level.txt",
+            "spispopd1.txt",
+            "spispopd2.txt",
+            //"level2.txt",
+            //"level3.txt",
         };
 
         LoadLevel(level_filenames[current_level].c_str());
@@ -62,32 +78,58 @@ struct Game {
 
         if (state == GameState::Game) {
 
-            if (wasd & 512) {
-                state = GameState::MainMenu;
-                ui.panel_map.at("game_ui").second = false;
-                ui.panel_map.at("main_menu").second = true;
-                main_menu_selected = 0;
-                ui.panel_map.at("main_menu").first.writings[main_menu_selected].highlighted = true;
+            if ((wasd & 512) && !(prev_wasd & 512)) {
+                state = GameState::Pause;
+                ui.panel_map.at("pause").second = true;
+                pause_menu_selected = 0;
+                ui.panel_map.at("pause").first.writings[pause_menu_selected].highlighted = true;
+                ui.panel_map.at("pause").first.writings[(pause_menu_selected + 1) % 2].highlighted = false;
+                prev_wasd = wasd;
+                return;
             }
 
             unsigned int eaten;
-            player.Update(delta, wasd, eaten);
-            bool hit_player = false;
-            random_guy.Update(delta, player.precise_x, player.precise_y, hit_player);
+            bool grab_weapon = false;
+            player.Update(delta, wasd, eaten, grab_weapon);
+            bool hit_red = false;
+            bool hit_yellow = false;
+            bool hit_blue = false;
+            bool hit_pink = false;
+            red.Update(delta, player.precise_x, player.precise_y, player.direction, red.precise_x, red.precise_y, hit_red);
+            yellow.Update(delta, player.precise_x, player.precise_y, player.direction, red.precise_x, red.precise_y, hit_yellow);
+            blue.Update(delta, player.precise_x, player.precise_y, player.direction, red.precise_x, red.precise_y, hit_blue);
+            pink.Update(delta, player.precise_x, player.precise_y, player.direction, red.precise_x, red.precise_y, hit_pink);
+            bool hit_player = hit_red || hit_yellow || hit_blue || hit_pink;
 
-            if (hit_player && !player.just_hit) {
-                player.just_hit = true;
-                player.time_after_hit = 0;
-                player.lives--;
-                std::cout << "Vite restanti: " << player.lives << '\n';
-                char str[] = "Lives: x";
-                str[7] = '0' + player.lives;
-                ui.panel_map.at("game_ui").first.writings[0].Update(str);
+            if (hit_player) {
+                if (weapon.player_armed) {
+                    if (hit_red) {
+                        red.Killed();
+                    }
+                    else if (hit_yellow) {
+                        yellow.Killed();
+                    }
+                    else if (hit_blue) {
+                        blue.Killed();
+                    }
+                    else if (hit_pink) {
+                        pink.Killed();
+                    }
+                }
+                else if (!player.just_hit) {
+                    player.just_hit = true;
+                    player.time_after_hit = 0;
+                    player.lives--;
+                    char str[] = "Lives: x";
+                    str[7] = '0' + player.lives;
+                    ui.panel_map.at("game_ui").first.writings[0].Update(str);
+                }
             }
 
             if (player.lives <= 0) {
-                std::cout << "Game over!\n";
-                stop_game = true;
+                state = GameState::Over;
+                ui.panel_map.at("game_over").second = true;
+                ui.panel_map.at("game_ui").second = false;
             }
 
             map.remaining_crusts -= eaten;
@@ -101,7 +143,24 @@ struct Game {
                 }
                 else {
                     LoadLevel(level_filenames[current_level].c_str());
+                    char str[] = "Stage x";
+                    str[6] = '1' + current_level;   // TODO: support 10 levels or more
+                    ui.panel_map.at("transition").first.writings[0].Update(str);
+                    state = GameState::Transition;
+                    transition_t = 0;
+                    ui.panel_map.at("transition").second = true;
                 }
+            }
+
+            if (grab_weapon) {
+                weapon.SetPlayerArmed();
+                red.Frighten();
+                yellow.Frighten();
+                blue.Frighten();
+                pink.Frighten();
+            }
+            if (weapon.player_armed) {
+                weapon.Update(delta, player.precise_x, player.precise_y);
             }
 
             // TODO: Rimuovere questo metodo di debug
@@ -123,12 +182,17 @@ struct Game {
             if ((wasd & 256) && !(prev_wasd & 256)) {
                 if (main_menu_selected == 0) {
                     // New game
-                    state = GameState::Game;
                     player.lives = 3;
                     current_level = 0;
                     LoadLevel(level_filenames[current_level].c_str());
                     ui.panel_map.at("game_ui").second = true;
                     ui.panel_map.at("main_menu").second = false;
+                    state = GameState::Transition;
+                    char str[] = "Stage x";
+                    str[6] = '1' + current_level;
+                    ui.panel_map.at("transition").first.writings[0].Update(str);
+                    ui.panel_map.at("transition").second = true;
+                    transition_t = 0;
                     return;
                 }
                 else if (main_menu_selected == 1) {
@@ -157,16 +221,78 @@ struct Game {
             }
             prev_wasd = wasd;
         }
+        else if (state == GameState::Over) {
+            if ((wasd & 256) && !(prev_wasd & 256)) {
+                state = GameState::MainMenu;
+                ui.panel_map.at("main_menu").second = true;
+                ui.panel_map.at("game_over").second = false;
+            }
+            prev_wasd = wasd;
+        }
+        else if (state == GameState::Pause) {
+            if ((wasd & 256) && !(prev_wasd & 256)) {
+                if (pause_menu_selected == 0) {
+                    // Resume
+                    state = GameState::Game;
+                    ui.panel_map.at("game_ui").second = true;
+                    ui.panel_map.at("pause").second = false;
+                    prev_wasd = wasd;
+                    return;
+                }
+                else if (pause_menu_selected == 1) {
+                    // Back to menu
+                    state = GameState::MainMenu;
+                    ui.panel_map.at("main_menu").second = true;
+                    ui.panel_map.at("pause").second = false;
+                    ui.panel_map.at("game_ui").second = false;
+                    prev_wasd = wasd;
+                    return;
+                }
+            }
+            else if ((wasd & 512) && !(prev_wasd & 512)) {
+                // Resume
+                state = GameState::Game;
+                ui.panel_map.at("pause").second = false;
+                prev_wasd = wasd;
+                return;
+            }
+            else if ((wasd & 16) && !(prev_wasd & 16)) {
+                ui.panel_map.at("pause").first.writings[pause_menu_selected].highlighted = false;
+                pause_menu_selected = (pause_menu_selected + (2 - 1)) & 1;  // -1 e poi %2
+                ui.panel_map.at("pause").first.writings[pause_menu_selected].highlighted = true;
+            }
+            else if ((wasd & 64) && !(prev_wasd & 64)) {
+                ui.panel_map.at("pause").first.writings[pause_menu_selected].highlighted = false;
+                pause_menu_selected = (pause_menu_selected + 1) & 1;  // +1 e poi %2
+                ui.panel_map.at("pause").first.writings[pause_menu_selected].highlighted = true;
+            }
+            prev_wasd = wasd;
+        }
+        else if (state == GameState::Transition) {
+            transition_t += delta;
+            if (transition_t >= kTransitionDuration) {
+                state = GameState::Game;
+                ui.panel_map.at("transition").second = false;
+                prev_wasd = wasd;
+                return;
+            }
+        }
+
     }
 
     void Render() {
 
-        if (state == GameState::Game) {
+        if (state == GameState::Game || state == GameState::Pause || state == GameState::Transition) {
             map.Render();
             wall.Render();
+            teleport.Render();
             crust.Render();
             player.Render();
-            random_guy.Render();
+            weapon.Render();
+            red.Render();
+            yellow.Render();
+            blue.Render();
+            pink.Render();
         }
 
         glEnable(GL_BLEND);
@@ -180,9 +306,14 @@ struct Game {
 
         map.LoadLevel(level);
         wall.LoadLevel(level);
+        teleport.LoadLevel(level);
         player.LoadLevel(level);
         crust.LoadLevel(level);
-        random_guy.LoadLevel(level);
+        weapon.LoadLevel(level);
+        red.LoadLevel(level);
+        yellow.LoadLevel(level);
+        blue.LoadLevel(level);
+        pink.LoadLevel(level);
 
     }
 

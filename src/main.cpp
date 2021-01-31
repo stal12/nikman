@@ -62,7 +62,6 @@ void processInput(GLFWwindow* window, unsigned int& wasd)
 }
 
 
-
 int main()
 {
 
@@ -77,6 +76,7 @@ int main()
 
     // Create window object
     //GLFWwindow* window = glfwCreateWindow(window_width, window_height, "Nikman", glfwGetPrimaryMonitor(), NULL);
+    glfwWindowHint(GLFW_SAMPLES, 4);    // MSAA
     GLFWwindow* window = glfwCreateWindow(kWindowWidth, kWindowHeight, "Nikman", NULL, NULL);
     if (window == NULL)
     {
@@ -104,8 +104,8 @@ int main()
     stbi_set_flip_vertically_on_load(true);
     
     {
-
         Game game(level);
+        glEnable(GL_MULTISAMPLE);
 
         // Very simple render loop
         float formerFrame = glfwGetTime();

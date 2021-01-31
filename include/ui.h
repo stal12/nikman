@@ -6,6 +6,7 @@
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <optional>
 
 #include "utility.h"
 #include "shader.h"
@@ -353,15 +354,87 @@ struct Writing {
 const glm::vec3 Writing::normal_color = glm::vec3(1.f);
 const glm::vec3 Writing::highlighted_color = glm::vec3(1.f, 1.f, 0.f);
 
+
+struct RectBackground {
+    unsigned int VAO;
+    unsigned int VBO;
+
+    RectBackground(int width, int height) {
+        float vertices[] = {
+            // xy-pos       // xy-tex
+            0.f,          0.f - height,
+            0.f,          0.f,
+            0.f + width,  0.f - height,
+            0.f,          0.f,
+            0.f + width,  0.f,
+            0.f + width,  0.f - height,
+        };
+
+        // 1. bind Vertex Array Object
+        glGenVertexArrays(1, &VAO);
+        glBindVertexArray(VAO);
+
+        // 2. copy our vertices array in a buffer for OpenGL to use
+        glGenBuffers(1, &VBO);
+        glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+        // 3. then set our vertex attributes pointers
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+    }
+
+    void Render(const Shader& shader, int panel_x, int panel_y) const {
+        shader.use();
+
+        glm::mat4 world(1.0f);
+        world = glm::translate(world, glm::vec3(panel_x, panel_y, 0.f));
+        shader.SetMat4("world", world);
+
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+    }
+
+    ~RectBackground() {
+        glDeleteBuffers(1, &VBO);
+        glDeleteVertexArrays(1, &VAO);
+    }
+
+    // Temporarily deleted for safety
+    RectBackground(const RectBackground& other) = delete;
+    RectBackground& operator=(const RectBackground& other) = delete;
+    RectBackground& operator=(RectBackground&& other) = delete;
+
+    RectBackground(RectBackground&& other) :
+        VAO(other.VAO),
+        VBO(other.VBO)
+    {
+        // TODO check this trick
+        other.VAO = -1;
+        other.VBO = -1;
+    }
+};
+
+
 struct Panel {
 
     std::vector<Writing> writings;
     int x;
     int y;
+    std::optional<RectBackground> background;
 
     Panel(int x_, int y_) : x(x_), y(y_) {}
 
-    void Render(const Shader& shader, unsigned int texture) const {
+    Panel(int x_, int y_, int w, int h, bool has_background = true) : x(x_), y(y_) {
+        if (has_background) {
+            background.emplace(w, h);
+        }
+    }
+
+    void Render(const Shader& shader, const Shader& shader_background, unsigned int texture) const {
+        if (background.has_value()) {
+            background.value().Render(shader_background, x, y);
+        }
         for (const auto& writing : writings) {
             writing.Render(shader, texture, x, y);
         }
@@ -376,17 +449,20 @@ struct Panel {
 struct UI {
 
     Shader shader;
+    Shader shader_background;
     Font font;
     std::map<std::string, std::pair<Panel, bool>> panel_map;
 
-    UI() : shader("glyph") {
+    UI() : shader("glyph"), shader_background("background") {
         if (!ReadFont("F:/progetti miei/nikman/resources/fonts/centaur_regular_32.xml", font)) {
             std::cerr << "Error in UI constructor: can't read font!\n";
         }
 
-        shader.use();
         glm::mat4 projection = glm::ortho(0.f, (float)kWindowWidth, 0.f, (float)kWindowHeight, 0.1f, 2.f);
+        shader.use();
         shader.SetMat4("projection", projection);
+        shader_background.use();
+        shader_background.SetMat4("projection", projection);
 
         Panel main_menu(500, 800);
         main_menu.AddWriting("New game", 0, 0, font);
@@ -398,16 +474,30 @@ struct UI {
         end_game.AddWriting("Back to menu", 0, -font.h_space * 3, font, false, true);
         AddPanel("end_game", std::move(end_game), false);
 
+        Panel game_over(500, 800);
+        game_over.AddWriting("Game over", 0, 0, font, false);
+        game_over.AddWriting("Back to menu", 0, -font.h_space * 3, font, false, true);
+        AddPanel("game_over", std::move(game_over), false);
+
         Panel game_ui(500, 895);
         game_ui.AddWriting("Lives: 3", 0, 0, font, true, false);
         AddPanel("game_ui", std::move(game_ui), false);
+
+        Panel pause(700, 600, 220, font.h_space*2);
+        pause.AddWriting("Resume", 0, 0, font, false, true);
+        pause.AddWriting("Back to menu", 0, -font.h_space, font, false);
+        AddPanel("pause", std::move(pause), false);
+
+        Panel transition(700, 600, 120, font.h_space);
+        transition.AddWriting("Stage 1", 5, 0, font, true, false);
+        AddPanel("transition", std::move(transition), false);
 
     }
 
     void Render() const {
         for (const auto& x : panel_map) {
             if (x.second.second) {
-                x.second.first.Render(shader, font.texture);
+                x.second.first.Render(shader, shader_background, font.texture);
             }
         }
     }
