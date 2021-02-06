@@ -11,6 +11,7 @@
 static constexpr char* const kShaderRoot = "../shaders";
 static constexpr char* const kTextureRoot = "../resources";
 static constexpr char* const kLevelRoot = "../resources/levels";
+static constexpr char* const kSoundsRoot = "../resources/sounds";
 
 static constexpr float kRatio = 16.f / 9.f;
 static constexpr float kWorldHeight = 11.f;  // It shall be higher in production

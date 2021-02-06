@@ -18,9 +18,12 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT $
 
 find_package(glfw3 REQUIRED)
 find_package(OpenGL REQUIRED)
+set(SFML_STATIC_LIBRARIES TRUE)
+find_package(SFML COMPONENTS audio REQUIRED)
 
 target_link_libraries(${ProjectName} glfw)
 target_link_libraries(${ProjectName} OpenGL::GL)
+target_link_libraries(${ProjectName} sfml-audio)
 
 target_include_directories(${ProjectName} PUBLIC include)
 target_include_directories(${ProjectName} PUBLIC "3rdparty/glad/include")

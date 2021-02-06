@@ -177,7 +177,7 @@ struct Map {
         w = level.w;
 
         grid = std::vector<Slot>(h * w);
-        for (const auto& x : level.pumpkin_home) {
+        for (const auto& x : level.home) {
             grid[x.first + x.second * w].RemoveCrust();
             grid[x.first + x.second * w].SetHome();
         }
@@ -200,7 +200,7 @@ struct Map {
         FillWalls(level.ver_walls, level.hor_walls);
         remaining_crusts = h * w - 1 -
             level.weapons.size() -
-            level.pumpkin_home.size() -
+            level.home.size() -
             level.mud.size() -
             level.teleports.size() -
             level.empty.size();
@@ -446,25 +446,25 @@ struct Player {
 
         unsigned char walls = grid[y * w + x].data & 15;
 
-        if ((wasd & 1) && !(walls & 1)) {
+        if ((wasd & 1) && !(walls & 1) && !grid[(y + 1)* w + x].Home()) {
             next_x = x;
             next_y = y + 1;
             direction = 1;
             state = State::Moving;
         }
-        else if ((wasd & 2) && !(walls & 2)) {
+        else if ((wasd & 2) && !(walls & 2) && !grid[y * w + (x - 1)].Home()) {
             next_x = x - 1;
             next_y = y;
             direction = 2;
             state = State::Moving;
         }
-        else if ((wasd & 4) && !(walls & 4)) {
+        else if ((wasd & 4) && !(walls & 4) && !grid[(y - 1) * w + x].Home()) {
             next_x = x;
             next_y = y - 1;
             direction = 4;
             state = State::Moving;
         }
-        else if ((wasd & 8) && !(walls & 8)) {
+        else if ((wasd & 8) && !(walls & 8) && !grid[y * w + (x + 1)].Home()) {
             next_x = x + 1;
             next_y = y;
             direction = 8;
@@ -668,6 +668,74 @@ struct Crust {
 
         h = level.h;
         w = level.w;
+
+    }
+
+
+};
+
+struct Tile {
+
+    const int size = 1;
+
+    unsigned int VBO;
+    unsigned int VAO;
+    unsigned int texture;
+    Shader shader;
+    int h;
+    int w;
+
+    std::vector<std::pair<int, int>> pos;
+
+    Tile(const char* name, int h_, int w_, std::vector<std::pair<int, int>> pos_) : shader("tile"), h(h_), w(w_), pos(pos_) {
+
+        MakeRect(1.f, 1.f, VAO, VBO);
+
+        int width, height;
+        texture = MakeTexture((std::string(name) + ".png").c_str(), width, height, false, true);
+
+        shader.use();
+        glm::mat4 world(1.f);
+        world = glm::scale(world, glm::vec3(size, size, 1.f));
+        shader.SetMat4("world", world);
+        shader.SetMat4("projection", kProjection);
+
+    }
+
+    ~Tile() {
+        glDeleteBuffers(1, &VBO);
+        glDeleteVertexArrays(1, &VAO);
+    }
+
+
+    void Render() const {
+
+        shader.use();
+
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindVertexArray(VAO);
+
+        for (const auto& x : pos) {
+            glm::mat4 world(1.f);
+            world = glm::translate(world, glm::vec3(
+                -w / 2.f + size / 2.f + size * x.first,
+                -h / 2.f + size / 2.f + size * x.second,
+                0.f
+            ));
+
+            world = glm::scale(world, glm::vec3(size, size, 1.f));
+            shader.SetMat4("world", world);
+
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+
+    }
+
+    void LoadLevel(const LevelDesc& level, std::vector<std::pair<int, int>> pos_) {
+
+        h = level.h;
+        w = level.w;
+        pos = pos_;
 
     }
 
@@ -943,8 +1011,8 @@ struct RandomGuy {
     void LoadLevel(const LevelDesc& level) {
         h = level.h;
         w = level.w;
-        x = level.pumpkin_home.front().first;   // TODO: implement enemy beginning
-        y = level.pumpkin_home.front().second;
+        x = level.home.front().first;   // TODO: implement enemy beginning
+        y = level.home.front().second;
         next_x = x;
         next_y = y;
         precise_x = x;
@@ -1411,8 +1479,8 @@ struct Ghost {
     void LoadLevel(const LevelDesc& level) {
         h = level.h;
         w = level.w;
-        home_x = level.pumpkin_home.front().first;
-        home_y = level.pumpkin_home.front().second;
+        home_x = level.home.front().first;
+        home_y = level.home.front().second;
         x = home_x;
         y = home_y;
         next_x = x;

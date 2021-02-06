@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <filesystem>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -13,12 +14,17 @@
 #include "stb_image.h"
 #undef STB_IMAGE_IMPLEMENTATION
 
+#include <SFML/Audio.hpp>
+
 #include "utility.h"
 #include "shader.h"
 #include "entity.h"
 #include "level.h"
 #include "game.h"
 #include "ui.h"
+
+
+using namespace std::filesystem;
 
 
 // WARNING: glfw and glad are currently in Debug mode
@@ -64,6 +70,15 @@ void processInput(GLFWwindow* window, unsigned int& wasd)
 
 int main()
 {
+
+    sf::SoundBuffer buffer;
+    if (!buffer.loadFromFile((path(kSoundsRoot) / path("stab.wav")).string()))
+        return -1;
+
+    sf::Sound sound;
+    sound.setBuffer(buffer);
+    sound.play();
+
 
     LevelDesc level = ReadLevelDesc((std::filesystem::path(kLevelRoot) / std::filesystem::path("level.txt")).string().c_str()); // TODO remove this
 

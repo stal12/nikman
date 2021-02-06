@@ -20,15 +20,13 @@ struct Game {
     static const std::vector<Ghost::Color> ghost_colors;
 
     Map map;
+    Tile mud;
+    Tile home;
     Crust crust;
     Weapon weapon;
     Player player;
     Wall wall;
     Teleport teleport;
-    //Ghost red;
-    //Ghost yellow;
-    //Ghost blue;
-    //Ghost brown;
     std::vector<Ghost> ghosts;
     UI ui;
     GameState state;
@@ -45,15 +43,13 @@ struct Game {
         state(GameState::MainMenu),
         mt(rd()),
         map(level.h, level.w, level),
+        mud("mud", level.h, level.w, level.mud),
+        home("home", level.h, level.w, level.home),
         wall(level.h, level.w, level),
         crust(level.h, level.w, map.grid),
         teleport(level.h, level.w, map.grid),
         weapon(level.h, level.w, map.grid),
         player(level.h, level.w, map.grid, teleport)
-        //red(Ghost::Color::Red, level.h, level.w, map.grid, teleport),
-        //yellow(Ghost::Color::Yellow, level.h, level.w, map.grid, teleport),
-        //blue(Ghost::Color::Blue, level.h, level.w, map.grid, teleport),
-        //brown(Ghost::Color::Brown, level.h, level.w, map.grid, teleport)
     {
         level_filenames = {
             //"pacman.txt",
@@ -289,6 +285,8 @@ struct Game {
 
         if (state == GameState::Game || state == GameState::Pause || state == GameState::Transition) {
             map.Render();
+            mud.Render();
+            home.Render();
             wall.Render();
             teleport.Render();
             crust.Render();
@@ -309,6 +307,8 @@ struct Game {
         LevelDesc level = ReadLevelDesc((std::filesystem::path(kLevelRoot) / std::filesystem::path(filename)).string().c_str());
 
         map.LoadLevel(level);
+        mud.LoadLevel(level, level.mud);
+        home.LoadLevel(level, level.home);
         wall.LoadLevel(level);
         teleport.LoadLevel(level);
         player.LoadLevel(level);
@@ -321,7 +321,8 @@ struct Game {
 
 };
 
-const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Yellow, Ghost::Color::Blue, Ghost::Color::Brown, Ghost::Color::Purple };
+//const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Yellow, Ghost::Color::Blue, Ghost::Color::Brown, Ghost::Color::Purple };
+const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Purple };
 //const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Purple };
 
 

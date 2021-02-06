@@ -15,7 +15,7 @@ struct LevelDesc {
     std::vector<std::pair<int, int>> hor_walls;
     std::pair<int, int> player_pos;
     std::vector<std::pair<int, int>> weapons;
-    std::vector<std::pair<int, int>> pumpkin_home;
+    std::vector<std::pair<int, int>> home;
     std::vector<std::pair<int, int>> mud;
     std::vector<std::pair<int, int>> empty;
     std::vector<std::pair<int, int>> teleports;
@@ -36,7 +36,7 @@ LevelDesc ReadLevelDesc(const char* filename) {
         case 'w':
             level.weapons.emplace_back(x, y);   break;
         case 'h':
-            level.pumpkin_home.emplace_back(x, y);  break;
+            level.home.emplace_back(x, y);  break;
         case 'm':
             level.mud.emplace_back(x, y);  break;
         case 'e':
