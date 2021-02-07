@@ -35,6 +35,12 @@ struct Game {
     int pause_menu_selected = 0;
     const float kTransitionDuration = 2.f;
     float transition_t;
+    int score = 0;
+
+    static constexpr int crustScore = 1;
+    static constexpr int weaponScore = 5;
+    static constexpr int killScore = 10;
+    static constexpr int lifePrice = 500;
 
     std::random_device rd;
     std::mt19937 mt;
@@ -91,6 +97,8 @@ struct Game {
 
         if (state == GameState::Game) {
 
+            int scoreDelta = 0;
+
             if ((wasd & 512) && !(prev_wasd & 512)) {
                 state = GameState::Pause;
                 ui.panel_map.at("pause").second = true;
@@ -105,6 +113,9 @@ struct Game {
             bool grab_weapon = false;
             player.Update(delta, wasd, eaten, grab_weapon);
 
+            scoreDelta += eaten * crustScore;
+            scoreDelta += grab_weapon * weaponScore;
+
             bool hit_player = false;
             for (auto& ghost : ghosts) {
                 bool hit_ghost = false;
@@ -112,6 +123,8 @@ struct Game {
                 if (hit_ghost) {
                     if (weapon.player_armed) {
                         ghost.Killed();
+                        scoreDelta += killScore;
+                        weapon.PlaySound();
                     }
                     else {
                         hit_player = true;
@@ -129,6 +142,10 @@ struct Game {
 
                 if (player.lives <= 0) {
                     state = GameState::Over;
+                    char strScore[] = "Score: 0   ";
+                    snprintf(strScore + 7, 4, "%d", score);
+                    ui.panel_map.at("game_over").first.writings[1].Update(strScore);
+
                     ui.panel_map.at("game_over").second = true;
                     ui.panel_map.at("game_ui").second = false;
                 }
@@ -140,6 +157,10 @@ struct Game {
                 current_level++;
                 if (current_level == level_filenames.size()) {
                     state = GameState::End;
+                    char strScore[] = "Score: 0   ";
+                    snprintf(strScore + 7, 4, "%d", score);
+                    ui.panel_map.at("end_game").first.writings[1].Update(strScore);
+
                     ui.panel_map.at("end_game").second = true;
                     ui.panel_map.at("game_ui").second = false;
                 }
@@ -178,6 +199,19 @@ struct Game {
             }
 
             prev_wasd = wasd;
+
+            if (scoreDelta) {
+                if ((score + scoreDelta) / lifePrice > score / lifePrice) {
+                    player.lives++;
+                    char str[] = "Lives: x";
+                    str[7] = '0' + player.lives;
+                    ui.panel_map.at("game_ui").first.writings[0].Update(str);
+                }
+                score += scoreDelta;
+                char strScore[] = "Score: 0   ";
+                snprintf(strScore + 7, 4, "%d", score);
+                ui.panel_map.at("game_ui").first.writings[1].Update(strScore);
+            }
         }
         else if (state == GameState::MainMenu) {
             if ((wasd & 256) && !(prev_wasd & 256)) {
@@ -185,6 +219,7 @@ struct Game {
                     // New game
                     player.lives = 3;
                     current_level = 0;
+                    score = 0;
                     LoadLevel(level_filenames[current_level].c_str());
                     ui.panel_map.at("game_ui").second = true;
                     ui.panel_map.at("main_menu").second = false;
@@ -194,6 +229,14 @@ struct Game {
                     ui.panel_map.at("transition").first.writings[0].Update(str);
                     ui.panel_map.at("transition").second = true;
                     transition_t = 0;
+
+                    char strLives[] = "Lives: x";
+                    strLives[7] = '0' + player.lives;
+                    ui.panel_map.at("game_ui").first.writings[0].Update(strLives);
+
+                    char strScore[] = "Score: 0   ";
+                    ui.panel_map.at("game_ui").first.writings[1].Update(strScore);
+
                     return;
                 }
                 else if (main_menu_selected == 1) {
@@ -316,7 +359,8 @@ struct Game {
         weapon.LoadLevel(level);
         for (auto& ghost : ghosts) {
             ghost.LoadLevel(level);
-        }
+        }        
+
     }
 
 };

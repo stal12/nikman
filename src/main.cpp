@@ -71,13 +71,13 @@ void processInput(GLFWwindow* window, unsigned int& wasd)
 int main()
 {
 
-    sf::SoundBuffer buffer;
-    if (!buffer.loadFromFile((path(kSoundsRoot) / path("stab.wav")).string()))
-        return -1;
+    //sf::SoundBuffer buffer;
+    //if (!buffer.loadFromFile((path(kSoundsRoot) / path("stab.wav")).string()))
+    //    return -1;
 
-    sf::Sound sound;
-    sound.setBuffer(buffer);
-    sound.play();
+    //sf::Sound sound;
+    //sound.setBuffer(buffer);
+    //sound.play();
 
 
     LevelDesc level = ReadLevelDesc((std::filesystem::path(kLevelRoot) / std::filesystem::path("level.txt")).string().c_str()); // TODO remove this

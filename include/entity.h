@@ -8,6 +8,7 @@
 
 #include <glad/glad.h>
 #include <stb_image.h>
+#include <SFML/Audio.hpp>
 
 #include "shader.h"
 #include "level.h"
@@ -758,6 +759,8 @@ struct Weapon {
     float t;
     const float duration = 3.f;
     const float blink_freq = 50.0f;
+    sf::SoundBuffer soundBuffer;
+    sf::Sound sound;
 
     std::vector<Slot>& grid;
 
@@ -774,11 +777,20 @@ struct Weapon {
         shader.SetMat4("world", world);
         shader.SetMat4("projection", kProjection);
 
+        if (!soundBuffer.loadFromFile(SoundPath("stab.wav"))) {
+            std::cerr << "Weapon::Weapon: can't open file \"stab.wav\"\n";
+        }
+        sound.setBuffer(soundBuffer);
+
     }
 
     ~Weapon() {
         glDeleteBuffers(1, &VBO);
         glDeleteVertexArrays(1, &VAO);
+    }
+
+    void PlaySound() {
+        sound.play();
     }
 
     void Update(float delta, float player_x_, float player_y_) {
@@ -850,7 +862,8 @@ struct Weapon {
 
         h = level.h;
         w = level.w;
-
+        player_armed = false;
+        
     }
 
 
@@ -1077,7 +1090,7 @@ struct Ghost {
     Ghost(Color color_, int h_, int w_, std::vector<Slot>& grid_, Teleport& teleport_, std::mt19937& mt_) :
         color(color_),
         state(State::Home),
-        speed(speed_array[static_cast<int>(color_)] * 2.0f),
+        speed(speed_array[static_cast<int>(color_)] * 0.5f),
         h(h_),
         w(w_),
         grid(grid_),

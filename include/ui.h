@@ -471,24 +471,27 @@ struct UI {
 
         Panel end_game(500, 800);
         end_game.AddWriting("Congratulations! You won!", 0, 0, font, false);
-        end_game.AddWriting("Back to menu", 0, -font.h_space * 3, font, false, true);
+        end_game.AddWriting("Score: 0   ", 0, -font.h_space, font, true, false);
+        end_game.AddWriting("Back to menu", 0, -font.h_space * 4, font, false, true);
         AddPanel("end_game", std::move(end_game), false);
 
         Panel game_over(500, 800);
         game_over.AddWriting("Game over", 0, 0, font, false);
-        game_over.AddWriting("Back to menu", 0, -font.h_space * 3, font, false, true);
+        game_over.AddWriting("Score: 0   ", 0, -font.h_space, font, true, false);
+        game_over.AddWriting("Back to menu", 0, -font.h_space * 4, font, false, true);
         AddPanel("game_over", std::move(game_over), false);
 
         Panel game_ui(500, 895);
         game_ui.AddWriting("Lives: 3", 0, 0, font, true, false);
+        game_ui.AddWriting("Score: 0   ", 450, 0, font, true, false);
         AddPanel("game_ui", std::move(game_ui), false);
 
-        Panel pause(700, 600, 220, font.h_space*2);
+        Panel pause(690, 600, 220, font.h_space*2);
         pause.AddWriting("Resume", 0, 0, font, false, true);
         pause.AddWriting("Back to menu", 0, -font.h_space, font, false);
         AddPanel("pause", std::move(pause), false);
 
-        Panel transition(700, 600, 120, font.h_space);
+        Panel transition(740, 600, 120, font.h_space);
         transition.AddWriting("Stage 1", 5, 0, font, true, false);
         AddPanel("transition", std::move(transition), false);
 

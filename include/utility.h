@@ -58,5 +58,9 @@ unsigned int MakeTexture(const char* filename, int& width, int& height, bool nea
     return texture;
 }
 
+std::string SoundPath(const char* name) {
+    return (std::filesystem::path(kSoundsRoot) / std::filesystem::path(name)).string();
+}
+
 
 #endif // NIKMAN_UTILITY_H
