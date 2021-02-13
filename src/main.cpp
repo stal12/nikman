@@ -23,6 +23,8 @@
 #include "game.h"
 #include "ui.h"
 
+// TODO this worked once, and then no more
+// #pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup") 
 
 using namespace std::filesystem;
 
@@ -90,8 +92,8 @@ int main()
     //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
     // Create window object
-    //GLFWwindow* window = glfwCreateWindow(window_width, window_height, "Nikman", glfwGetPrimaryMonitor(), NULL);
     glfwWindowHint(GLFW_SAMPLES, 4);    // MSAA
+    //GLFWwindow* window = glfwCreateWindow(kWindowWidth, kWindowHeight, "Nikman", glfwGetPrimaryMonitor(), NULL);
     GLFWwindow* window = glfwCreateWindow(kWindowWidth, kWindowHeight, "Nikman", NULL, NULL);
     if (window == NULL)
     {

@@ -465,8 +465,9 @@ struct UI {
         shader_background.SetMat4("projection", projection);
 
         Panel main_menu(500, 800);
-        main_menu.AddWriting("New game", 0, 0, font);
-        main_menu.AddWriting("Quit", 0, -font.h_space, font);
+        main_menu.AddWriting("New game 1 player", 0, 0, font);
+        main_menu.AddWriting("New game 2 players", 0, -font.h_space, font);
+        main_menu.AddWriting("Quit", 0, -font.h_space * 2, font);
         AddPanel("main_menu", std::move(main_menu), true);
 
         Panel end_game(500, 800);
@@ -481,7 +482,7 @@ struct UI {
         game_over.AddWriting("Back to menu", 0, -font.h_space * 4, font, false, true);
         AddPanel("game_over", std::move(game_over), false);
 
-        Panel game_ui(500, 895);
+        Panel game_ui(500, 1075);
         game_ui.AddWriting("Lives: 3", 0, 0, font, true, false);
         game_ui.AddWriting("Score: 0   ", 450, 0, font, true, false);
         AddPanel("game_ui", std::move(game_ui), false);

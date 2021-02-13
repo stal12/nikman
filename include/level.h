@@ -13,7 +13,8 @@ struct LevelDesc {
 
     std::vector<std::pair<int, int>> ver_walls;
     std::vector<std::pair<int, int>> hor_walls;
-    std::pair<int, int> player_pos;
+    std::pair<int, int> nik_pos;
+    std::pair<int, int> ste_pos;
     std::vector<std::pair<int, int>> weapons;
     std::vector<std::pair<int, int>> home;
     std::vector<std::pair<int, int>> mud;
@@ -32,7 +33,9 @@ LevelDesc ReadLevelDesc(const char* filename) {
     auto UseLetterLambda = [&](int c, int x, int y)->bool {
         switch (c) {
         case 'n':
-            level.player_pos = std::make_pair(x, y);    break;
+            level.nik_pos = std::make_pair(x, y);    break;
+        case 's':
+            level.ste_pos = std::make_pair(x, y);    break;
         case 'w':
             level.weapons.emplace_back(x, y);   break;
         case 'h':

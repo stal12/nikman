@@ -8,18 +8,28 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+static bool isSte = false;
+
 static constexpr char* const kShaderRoot = "../shaders";
 static constexpr char* const kTextureRoot = "../resources";
 static constexpr char* const kLevelRoot = "../resources/levels";
 static constexpr char* const kSoundsRoot = "../resources/sounds";
+static constexpr char* const kScoresPath = "highscores.txt";
 
 static constexpr float kRatio = 16.f / 9.f;
-static constexpr float kWorldHeight = 11.f;  // It shall be higher in production
+static constexpr float kWorldHeight = 15.f;  // It shall be higher in production
 static constexpr float kWorldWidth = kWorldHeight * kRatio;
-static constexpr int kWindowWidth = 1600;
+static constexpr int kWindowWidth = 1920;
 static constexpr int kWindowHeight = kWindowWidth / kRatio;
+static constexpr float kVerticalShift = 0.3f;  // kWorldHeight / 20.f;
 
-static const glm::mat4 kProjection = glm::ortho(-kWorldWidth / 2, kWorldWidth / 2, -kWorldHeight / 2, kWorldHeight / 2, 0.1f, 10.f);
+static const glm::mat4 kProjection = glm::ortho(
+    -kWorldWidth / 2.f,
+    kWorldWidth / 2.f, 
+    (-kWorldHeight / 2.f) + kVerticalShift, 
+    (kWorldHeight / 2.f) + kVerticalShift, 
+    0.1f, 
+    10.f);
 
 unsigned int MakeTexture(const char* filename, int& width, int& height, bool nearest = false, bool alpha = false) {
     // Texture 

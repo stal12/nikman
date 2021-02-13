@@ -196,10 +196,11 @@ struct Map {
             grid[x.first + x.second * w].RemoveCrust();
             grid[x.first + x.second * w].SetTeleport();
         }
-        grid[level.player_pos.first + level.player_pos.second * w].RemoveCrust();
+        grid[level.nik_pos.first + level.nik_pos.second * w].RemoveCrust();
+        grid[level.ste_pos.first + level.ste_pos.second * w].RemoveCrust();
 
         FillWalls(level.ver_walls, level.hor_walls);
-        remaining_crusts = h * w - 1 -
+        remaining_crusts = h * w - 2 -
             level.weapons.size() -
             level.home.size() -
             level.mud.size() -
@@ -316,7 +317,7 @@ struct Teleport {
 
     Teleport(int h_, int w_, std::vector<Slot>& grid_) : shader("teleport"), h(h_), w(w_), grid(grid_), mt(rd()) {
 
-        MakeRect(0.7f, 0.7f, VAO, VBO);
+        MakeRect(0.7638f, 0.7638f, VAO, VBO);
 
         int width, height;
         texture = MakeTexture("teleport.png", width, height, false, true);
@@ -382,6 +383,9 @@ struct Teleport {
 
 struct Player {
 
+    enum class Name { Nik, Ste };
+    static const char* const texture_array[2];
+
     const int size = 1;
 
     unsigned int VBO;
@@ -400,7 +404,7 @@ struct Player {
     bool just_hit;
     bool just_teleported;
     float time_after_hit;
-    int lives = 3;
+    static int lives;
 
     const float speed = 4.5f;
     const float hit_recover_time = 1.0f;
@@ -412,13 +416,26 @@ struct Player {
     std::vector<Slot>& grid;
     Teleport& teleport;
 
+    Name name;
+    bool armed;
+    float weapon_t;
+    const float weaponDuration = 4.f;
+    const float weaponVanishingTime = 2.f;
+    bool weaponVanishing;
 
-    Player(int h_, int w_, std::vector<Slot>& grid_, Teleport& teleport_) : shader("player"), h(h_), w(w_), grid(grid_), teleport(teleport_) {
+    Player(Name name_, int h_, int w_, std::vector<Slot>& grid_, Teleport& teleport_) :
+        name(name_),
+        shader("player"),
+        h(h_),
+        w(w_),
+        grid(grid_),
+        teleport(teleport_)
+    {
 
-        MakeRect(0.7f, 0.7f, VAO, VBO);
+        MakeRect(0.8f, 0.8f, VAO, VBO);
 
         int width, height;
-        texture = MakeTexture("player.png", width, height, false, true);
+        texture = MakeTexture(texture_array[static_cast<int>(name)], width, height, false, true);
 
         x = 0;
         y = 0;
@@ -447,7 +464,7 @@ struct Player {
 
         unsigned char walls = grid[y * w + x].data & 15;
 
-        if ((wasd & 1) && !(walls & 1) && !grid[(y + 1)* w + x].Home()) {
+        if ((wasd & 1) && !(walls & 1) && !grid[(y + 1) * w + x].Home()) {
             next_x = x;
             next_y = y + 1;
             direction = 1;
@@ -483,7 +500,28 @@ struct Player {
         else return 3;
     }
 
-    void Update(float delta, unsigned int wasd, unsigned int& eaten, bool& weapon) {
+    void GrabWeapon() {
+        weapon_t = 0;
+        weaponVanishing = false;
+        armed = true;
+    }
+
+    void LoseWeapon() {
+        armed = false;
+    }
+
+    void Update(float delta, unsigned int wasd, float other_x, float other_y, unsigned int& eaten, bool& weapon) {
+
+        // Update weapon
+        if (armed) {
+            weapon_t += delta;
+            if (weapon_t > weaponDuration) {
+                armed = false;
+            }
+            else if (!weaponVanishing && (weaponDuration - weapon_t < weaponVanishingTime)) {
+                weaponVanishing = true;
+            }
+        }
 
         if (just_hit) {
             time_after_hit += delta;
@@ -493,13 +531,25 @@ struct Player {
         }
 
         if (state == State::Moving) {
-            t += delta * speed;
             if (((direction >> 2) | ((direction << 2) & 15)) & wasd) {
                 direction = ((direction >> 2) | ((direction << 2) & 15));
                 std::swap(x, next_x);
                 std::swap(y, next_y);
                 t = 1.f - t;
                 grid[y * w + x].SetDirection(DirTo2Bit(direction));
+            }
+
+            constexpr float otherDistMin = 0.5f;
+            if (isSte &&
+                (precise_x - other_x) * (precise_x - other_x) + (precise_y - other_y) * (precise_y - other_y) < otherDistMin &&
+                (direction == 1 && other_y > precise_y ||
+                    direction == 2 && other_x < precise_x ||
+                    direction == 4 && other_y < precise_y ||
+                    direction == 8 && other_x > precise_x)
+                ) {
+            }
+            else {
+                t += delta * speed;
             }
             if (t >= 1.f) {
                 x = next_x;
@@ -529,7 +579,6 @@ struct Player {
 
         // Eat crusts, pick up weapons
         float dist_threshold = 0.2f;
-        eaten = 0;
         if (t < dist_threshold) {
             if (grid[y * w + x].Crust()) {
                 ++eaten;
@@ -575,8 +624,14 @@ struct Player {
     void LoadLevel(const LevelDesc& level) {
         h = level.h;
         w = level.w;
-        x = level.player_pos.first;
-        y = level.player_pos.second;
+        if (name == Name::Nik) {
+            x = level.nik_pos.first;
+            y = level.nik_pos.second;
+        }
+        else {
+            x = level.ste_pos.first;
+            y = level.ste_pos.second;
+        }
         precise_x = x;
         precise_y = y;
         next_x = x;
@@ -585,6 +640,7 @@ struct Player {
         state = State::Idle;
         just_hit = false;
         just_teleported = false;
+        armed = false;
 
         shader.use();
         glm::mat4 world(1.f);
@@ -614,7 +670,7 @@ struct Crust {
 
     Crust(int h_, int w_, std::vector<Slot>& grid_) : shader("crust"), h(h_), w(w_), grid(grid_) {
 
-        MakeRect(0.2f, 0.4f, VAO, VBO);
+        MakeRect(0.222f, 0.444f, VAO, VBO);
 
         int width, height;
         texture = MakeTexture("crust.png", width, height, false, true);
@@ -753,20 +809,26 @@ struct Weapon {
     Shader shader;
     int h;
     int w;
-    bool player_armed = false;
-    float player_x;
-    float player_y;
-    float t;
     const float duration = 3.f;
     const float blink_freq = 50.0f;
     sf::SoundBuffer soundBuffer;
     sf::Sound sound;
 
     std::vector<Slot>& grid;
+    const Player& nik;
+    const Player& ste;
 
-    Weapon(int h_, int w_, std::vector<Slot>& grid_) : shader("sword"), h(h_), w(w_), grid(grid_) {
 
-        MakeRect((0.6f * 25) / 36, 0.6f, VAO, VBO);
+    Weapon(int h_, int w_, std::vector<Slot>& grid_, const Player& nik_, const Player& ste_) :
+        shader("sword"),
+        h(h_),
+        w(w_),
+        grid(grid_),
+        nik(nik_),
+        ste(ste_)
+    {
+
+        MakeRect((0.61111f * 25) / 36, 0.61111f, VAO, VBO);
 
         int width, height;
         texture = MakeTexture("sword.png", width, height, false, true);
@@ -793,21 +855,21 @@ struct Weapon {
         sound.play();
     }
 
-    void Update(float delta, float player_x_, float player_y_) {
-        t += delta;
-        if (t > duration) {
-            player_armed = false;
-        }
-        else {
-            player_x = player_x_;
-            player_y = player_y_;
-        }
-    }
+    //void Update(float delta) {
+    //    t += delta;
+    //    if (t > duration) {
+    //        player_armed = false;
+    //    }
+    //    else {
+    //        player_x = player_x_;
+    //        player_y = player_y_;
+    //    }
+    //}
 
-    void SetPlayerArmed(bool player_armed_ = true) {
-        player_armed = player_armed_;
-        t = 0;
-    }
+    //void SetPlayerArmed( bool player_armed_ = true) {
+    //    player_armed = player_armed_;
+    //    t = 0;
+    //}
 
     void Render() const {
 
@@ -839,13 +901,28 @@ struct Weapon {
             }
         }
 
-
-        if (player_armed && (t < duration - 2.f || sinf(t * blink_freq) > -0.2)) {
+        if (nik.armed && (!nik.weaponVanishing || sinf(nik.weapon_t * blink_freq) > -0.2)) {
 
             glm::mat4 world(1.f);
             world = glm::translate(world, glm::vec3(
-                -w / 2.f + size / 2.f + size * player_x + size / 4.f,
-                -h / 2.f + size / 2.f + size * player_y - size / 8.f,
+                -w / 2.f + size / 2.f + size * nik.precise_x + size / 4.f,
+                -h / 2.f + size / 2.f + size * nik.precise_y - size / 8.f,
+                0.f
+            ));
+
+            world = glm::scale(world, glm::vec3(size / 1.5f, size / 1.5f, 1.f));
+            shader.SetMat4("world", world);
+
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        }
+
+        if (ste.armed && (!ste.weaponVanishing || sinf(ste.weapon_t * blink_freq) > -0.2)) {
+
+            glm::mat4 world(1.f);
+            world = glm::translate(world, glm::vec3(
+                -w / 2.f + size / 2.f + size * ste.precise_x + size / 4.f,
+                -h / 2.f + size / 2.f + size * ste.precise_y - size / 8.f,
                 0.f
             ));
 
@@ -862,8 +939,7 @@ struct Weapon {
 
         h = level.h;
         w = level.w;
-        player_armed = false;
-        
+
     }
 
 
@@ -1087,18 +1163,24 @@ struct Ghost {
 
     std::mt19937& mt;
 
-    Ghost(Color color_, int h_, int w_, std::vector<Slot>& grid_, Teleport& teleport_, std::mt19937& mt_) :
+    const Player& nik;
+    const Player& ste;
+
+
+    Ghost(Color color_, int h_, int w_, std::vector<Slot>& grid_, Teleport& teleport_, std::mt19937& mt_, const Player& nik_, const Player& ste_) :
         color(color_),
         state(State::Home),
-        speed(speed_array[static_cast<int>(color_)] * 0.5f),
+        speed(speed_array[static_cast<int>(color_)] * 1.5f),
         h(h_),
         w(w_),
         grid(grid_),
         mt(mt_),
-        teleport(teleport_)
+        teleport(teleport_),
+        nik(nik_),
+        ste(ste_)
     {
 
-        MakeRect(0.49f, 0.49f, VAO, VBO);
+        MakeRect(0.7f, 0.7f, VAO, VBO);
 
         int width, height;
         texture = MakeTexture(texture_array[static_cast<int>(color)], width, height, false, true);
@@ -1159,7 +1241,10 @@ struct Ghost {
         just_teleported(other.just_teleported),
         grid(other.grid),
         teleport(other.teleport),
-        mt(other.mt) {
+        mt(other.mt),
+        nik(other.nik),
+        ste(other.ste)
+    {
         other.VAO = -1;
         other.VBO = -1;
         // TODO: check this trick
@@ -1394,8 +1479,9 @@ struct Ghost {
         }
     }
 
-    void Update(float delta, float player_x, float player_y, unsigned char player_dir, float red_x, float red_y, bool& hit_player) {
+    void Update(float delta, float red_x, float red_y, bool& hitNik, bool& hitSte) {
 
+        // TODO: also chase Ste
         state_t += delta;
         if (state == State::Chase) {
             if (state_t >= chase_duration) {
@@ -1438,7 +1524,7 @@ struct Ghost {
                 just_teleported = false;
             }
             t -= 1.f;
-            SetNewDir(player_x, player_y, player_dir, red_x, red_y);
+            SetNewDir(nik.precise_x, nik.precise_y, nik.direction, red_x, red_y);
             SetNextXY();
         }
 
@@ -1447,9 +1533,16 @@ struct Ghost {
 
         // Check collision with player
         constexpr float threshold = 0.1;
-        float squared_dist = (precise_x - player_x) * (precise_x - player_x) + (precise_y - player_y) * (precise_y - player_y);
-        if (squared_dist < threshold) {
-            hit_player = true;
+        float squaredDistNik = (precise_x - nik.precise_x) * (precise_x - nik.precise_x) + (precise_y - nik.precise_y) * (precise_y - nik.precise_y);
+        if (squaredDistNik < threshold) {
+            hitNik = true;
+        }
+
+        if (isSte) {
+            float squaredDistSte = (precise_x - ste.precise_x) * (precise_x - ste.precise_x) + (precise_y - ste.precise_y) * (precise_y - ste.precise_y);
+            if (squaredDistSte < threshold) {
+                hitSte = true;
+            }
         }
 
     }
@@ -1538,7 +1631,11 @@ struct Ghost {
 };
 
 const char* const Ghost::texture_array[5] = { "ghost_red.png", "ghost_yellow.png" , "ghost_blue.png" , "ghost_brown.png", "ghost_purple.png" };
-const float Ghost::speed_array[5] = { 2.f, 1.9f, 1.8f, 1.7f, 1.6f };
+const float Ghost::speed_array[5] = { 2.f, 0.1f, 1.8f, 1.7f, 1.6f };
 Shader Ghost::shader;
+
+const char* const Player::texture_array[2] = { "nik.png", "ste.png" };
+
+int Player::lives;
 
 #endif

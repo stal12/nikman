@@ -24,7 +24,8 @@ struct Game {
     Tile home;
     Crust crust;
     Weapon weapon;
-    Player player;
+    Player nik;
+    Player ste;
     Wall wall;
     Teleport teleport;
     std::vector<Ghost> ghosts;
@@ -54,21 +55,23 @@ struct Game {
         wall(level.h, level.w, level),
         crust(level.h, level.w, map.grid),
         teleport(level.h, level.w, map.grid),
-        weapon(level.h, level.w, map.grid),
-        player(level.h, level.w, map.grid, teleport)
+        nik(Player::Name::Nik, level.h, level.w, map.grid, teleport),
+        ste(Player::Name::Ste, level.h, level.w, map.grid, teleport),
+        weapon(level.h, level.w, map.grid, nik, ste)
     {
         level_filenames = {
             //"pacman.txt",
             //"level.txt",
             "spispopd1.txt",
-            "spispopd2.txt",
+            //"spispopd2.txt",
             //"level2.txt",
             //"level3.txt",
+            //"level4.txt"
         };
 
         Ghost::shader = Shader("ghost");
         for (const auto color : ghost_colors) {
-            ghosts.emplace_back(color, level.h, level.w, map.grid, teleport, mt);
+            ghosts.emplace_back(color, level.h, level.w, map.grid, teleport, mt, nik, ste);
         }
 
         LoadLevel(level_filenames[current_level].c_str());
@@ -109,38 +112,70 @@ struct Game {
                 return;
             }
 
-            unsigned int eaten;
-            bool grab_weapon = false;
-            player.Update(delta, wasd, eaten, grab_weapon);
+            unsigned int eaten = 0;
+            bool grabWeaponNik = false;
+            bool grabWeaponSte = false;
+
+            unsigned int wasdNik = wasd >> 4;
+            if (!isSte) {
+                wasdNik |= wasd;
+            }
+            nik.Update(delta, wasdNik, ste.precise_x, ste.precise_y, eaten, grabWeaponNik);
+
+            if (isSte) {
+                ste.Update(delta, wasd, nik.precise_x, nik.precise_y, eaten, grabWeaponSte);
+            }
 
             scoreDelta += eaten * crustScore;
-            scoreDelta += grab_weapon * weaponScore;
+            scoreDelta += (grabWeaponNik + grabWeaponSte) * weaponScore;
 
-            bool hit_player = false;
+            bool hitNik = false;
+            bool hitSte = false;
             for (auto& ghost : ghosts) {
-                bool hit_ghost = false;
-                ghost.Update(delta, player.precise_x, player.precise_y, player.direction, ghosts[0].precise_x, ghosts[0].precise_y, hit_ghost);
-                if (hit_ghost) {
-                    if (weapon.player_armed) {
+                bool collisionNik = false;
+                bool collisionSte = false;
+                ghost.Update(delta, ghosts[0].precise_x, ghosts[0].precise_y, collisionNik, collisionSte);
+                if (collisionNik) {
+                    if (nik.armed) {
                         ghost.Killed();
                         scoreDelta += killScore;
                         weapon.PlaySound();
                     }
                     else {
-                        hit_player = true;
+                        hitNik = true;
+                    }
+                }
+
+                if (isSte && collisionSte) {
+                    if (ste.armed) {
+                        ghost.Killed();
+                        scoreDelta += killScore;
+                        weapon.PlaySound();
+                    }
+                    else {
+                        hitSte = true;
                     }
                 }
             }
 
-            if (hit_player && !player.just_hit) {
-                player.just_hit = true;
-                player.time_after_hit = 0;
-                player.lives--;
+            if (hitNik && !nik.just_hit) {
+                nik.just_hit = true;
+                nik.time_after_hit = 0;
+                nik.lives--;
+            }
+
+            if (hitSte && !ste.just_hit) {
+                ste.just_hit = true;
+                ste.time_after_hit = 0;
+                ste.lives--;
+            }
+
+            if(hitNik || hitSte) {
                 char str[] = "Lives: x";
-                str[7] = '0' + player.lives;
+                str[7] = '0' + nik.lives;
                 ui.panel_map.at("game_ui").first.writings[0].Update(str);
 
-                if (player.lives <= 0) {
+                if (nik.lives <= 0) {
                     state = GameState::Over;
                     char strScore[] = "Score: 0   ";
                     snprintf(strScore + 7, 4, "%d", score);
@@ -175,14 +210,18 @@ struct Game {
                 }
             }
 
-            if (grab_weapon) {
-                weapon.SetPlayerArmed();
+            if (grabWeaponNik) {
+                nik.GrabWeapon();
                 for (auto& ghost : ghosts) {
                     ghost.Frighten();
                 }
             }
-            if (weapon.player_armed) {
-                weapon.Update(delta, player.precise_x, player.precise_y);
+
+            if (grabWeaponSte) {
+                ste.GrabWeapon();
+                for (auto& ghost : ghosts) {
+                    ghost.Frighten();
+                }
             }
 
             // TODO: Rimuovere questo metodo di debug
@@ -202,9 +241,9 @@ struct Game {
 
             if (scoreDelta) {
                 if ((score + scoreDelta) / lifePrice > score / lifePrice) {
-                    player.lives++;
+                    nik.lives++;
                     char str[] = "Lives: x";
-                    str[7] = '0' + player.lives;
+                    str[7] = '0' + nik.lives;
                     ui.panel_map.at("game_ui").first.writings[0].Update(str);
                 }
                 score += scoreDelta;
@@ -215,9 +254,15 @@ struct Game {
         }
         else if (state == GameState::MainMenu) {
             if ((wasd & 256) && !(prev_wasd & 256)) {
-                if (main_menu_selected == 0) {
+                if (main_menu_selected < 2) {
                     // New game
-                    player.lives = 3;
+                    if (main_menu_selected == 0) {
+                        isSte = false;
+                    }
+                    else {
+                        isSte = true;
+                    }
+                    nik.lives = 3;
                     current_level = 0;
                     score = 0;
                     LoadLevel(level_filenames[current_level].c_str());
@@ -231,7 +276,7 @@ struct Game {
                     transition_t = 0;
 
                     char strLives[] = "Lives: x";
-                    strLives[7] = '0' + player.lives;
+                    strLives[7] = '0' + nik.lives;
                     ui.panel_map.at("game_ui").first.writings[0].Update(strLives);
 
                     char strScore[] = "Score: 0   ";
@@ -239,7 +284,7 @@ struct Game {
 
                     return;
                 }
-                else if (main_menu_selected == 1) {
+                else if (main_menu_selected == 2) {
                     // Quit
                     stop_game = true;
                     return;
@@ -247,12 +292,12 @@ struct Game {
             }
             else if ((wasd & 16) && !(prev_wasd & 16)) {
                 ui.panel_map.at("main_menu").first.writings[main_menu_selected].highlighted = false;
-                main_menu_selected = (main_menu_selected + (2 - 1)) & 1;  // -1 e poi %2
+                main_menu_selected = (main_menu_selected + (3 - 1)) % 3;  // -1 e poi %3
                 ui.panel_map.at("main_menu").first.writings[main_menu_selected].highlighted = true;
             }
             else if ((wasd & 64) && !(prev_wasd & 64)) {
                 ui.panel_map.at("main_menu").first.writings[main_menu_selected].highlighted = false;
-                main_menu_selected = (main_menu_selected + 1) & 1;  // +1 e poi %2
+                main_menu_selected = (main_menu_selected + 1) % 3;  // +1 e poi %3
                 ui.panel_map.at("main_menu").first.writings[main_menu_selected].highlighted = true;
             }
             prev_wasd = wasd;
@@ -333,7 +378,8 @@ struct Game {
             wall.Render();
             teleport.Render();
             crust.Render();
-            player.Render();
+            nik.Render();
+            if (isSte) ste.Render();
             weapon.Render();
             for (const auto& ghost : ghosts) {
                 ghost.Render();
@@ -354,7 +400,8 @@ struct Game {
         home.LoadLevel(level, level.home);
         wall.LoadLevel(level);
         teleport.LoadLevel(level);
-        player.LoadLevel(level);
+        nik.LoadLevel(level);
+        if(isSte) ste.LoadLevel(level);
         crust.LoadLevel(level);
         weapon.LoadLevel(level);
         for (auto& ghost : ghosts) {
@@ -366,8 +413,9 @@ struct Game {
 };
 
 //const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Yellow, Ghost::Color::Blue, Ghost::Color::Brown, Ghost::Color::Purple };
-const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Purple };
-//const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Purple };
+//const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Yellow, Ghost::Color::Blue, Ghost::Color::Purple };
+//const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Purple };
+const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Yellow };
 
 
 #endif // NIKMAN_GAME_H
