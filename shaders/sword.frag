@@ -7,6 +7,6 @@ uniform sampler2D swordTexture;
 void main()
 {
     FragColor = texture(swordTexture, texCoord);
-    if (FragColor.a < 0.5)
+    if (FragColor.a < 0.01)
         discard;
 } 

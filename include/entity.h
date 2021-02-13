@@ -13,6 +13,10 @@
 #include "shader.h"
 #include "level.h"
 
+struct Point {
+    float x;
+    float y;
+};
 
 void MakeRect(float width, float height, unsigned int& VAO, unsigned int& VBO) {
 
@@ -41,6 +45,36 @@ void MakeRect(float width, float height, unsigned int& VAO, unsigned int& VBO) {
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(sizeof(float) * 2));
     glEnableVertexAttribArray(1);
 }
+
+// Point a and Point b are the South-West and North-East corners in the texture atlas
+void MakeRectWithCoords(float width, float height, Point a, Point b, unsigned int& VAO, unsigned int& VBO) {
+
+    float vertices[] = {
+        // xy-pos                  // xy-tex
+        -width / 2, +height / 2,   a.x, b.y,
+        -width / 2, -height / 2,   a.x, a.y,
+        +width / 2, +height / 2,   b.x, b.y,
+        -width / 2, -height / 2,   a.x, a.y,
+        +width / 2, -height / 2,   b.x, a.y,
+        +width / 2, +height / 2,   b.x, b.y,
+    };
+
+    // 1. bind Vertex Array Object
+    glGenVertexArrays(1, &VAO);
+    glBindVertexArray(VAO);
+
+    // 2. copy our vertices array in a buffer for OpenGL to use
+    glGenBuffers(1, &VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    // 3. then set our vertex attributes pointers
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(sizeof(float) * 2));
+    glEnableVertexAttribArray(1);
+}
+
 
 struct Slot {
     // Default data is just a crust
@@ -224,7 +258,7 @@ struct Wall {
 
     unsigned int VBO;
     unsigned int VAO;
-    unsigned int texture;
+    //unsigned int texture;
     Shader shader;
     std::vector<std::pair<int, int>> ver_positions;
     std::vector<std::pair<int, int>> hor_positions;
@@ -233,10 +267,10 @@ struct Wall {
 
     Wall(float h_, float w_, LevelDesc level_) : shader("wall"), h(h_), w(w_) {
 
-        MakeRect(0.2f, 1.2f, VAO, VBO);
+        MakeRectWithCoords(0.2f, 1.2f, {255.f / 305.f, 157.f / 362.f}, { 275.f / 305.f, 257.f / 362.f }, VAO, VBO);
 
-        int width, height;
-        texture = MakeTexture("wall.png", width, height, true);
+        //int width, height;
+        //texture = MakeTexture("wall.png", width, height, true);
 
         shader.use();
         glm::mat4 world(1.f);
@@ -256,7 +290,7 @@ struct Wall {
 
     void Render() const {
         shader.use();
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindTexture(GL_TEXTURE_2D, atlas);
         glBindVertexArray(VAO);
 
         // TODO: use instancing
@@ -304,7 +338,7 @@ struct Teleport {
 
     unsigned int VBO;
     unsigned int VAO;
-    unsigned int texture;
+    //unsigned int texture;
     Shader shader;
     int h;
     int w;
@@ -317,10 +351,10 @@ struct Teleport {
 
     Teleport(int h_, int w_, std::vector<Slot>& grid_) : shader("teleport"), h(h_), w(w_), grid(grid_), mt(rd()) {
 
-        MakeRect(0.7638f, 0.7638f, VAO, VBO);
+        MakeRectWithCoords(55.f / 72.f, 55.f / 72.f, {250.f / 305.f, 307.f / 362.f}, { 305.f / 305.f, 362.f / 362.f }, VAO, VBO);
 
-        int width, height;
-        texture = MakeTexture("teleport.png", width, height, false, true);
+        //int width, height;
+        //texture = MakeTexture("teleport.png", width, height, false, true);
 
         shader.use();
         glm::mat4 world(1.f);
@@ -340,7 +374,7 @@ struct Teleport {
 
         shader.use();
 
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindTexture(GL_TEXTURE_2D, atlas);
         glBindVertexArray(VAO);
 
         for (const auto& x : teleports) {
@@ -390,7 +424,7 @@ struct Player {
 
     unsigned int VBO;
     unsigned int VAO;
-    unsigned int texture;
+    //unsigned int texture;
     Shader shader;
     int h;
     int w;
@@ -432,10 +466,20 @@ struct Player {
         teleport(teleport_)
     {
 
-        MakeRect(0.8f, 0.8f, VAO, VBO);
+        Point a, b;
+        if (name == Name::Nik) {
+            a = { 0.f, 56.f / 362.f };
+            b = { 56.f / 305.f, 112.f / 362.f };
+        }
+        else {
+            a = { 0.f, 0.f };
+            b = { 56.f / 305.f, 56.f / 362.f };
+        }
 
-        int width, height;
-        texture = MakeTexture(texture_array[static_cast<int>(name)], width, height, false, true);
+        MakeRectWithCoords(56.f / 72.f, 56.f / 72.f, a, b, VAO, VBO);
+
+        //int width, height;
+        //texture = MakeTexture(texture_array[static_cast<int>(name)], width, height, false, true);
 
         x = 0;
         y = 0;
@@ -491,13 +535,6 @@ struct Player {
         else {
             state = State::Idle;
         }
-    }
-
-    unsigned char DirTo2Bit(unsigned char dir) {
-        if (dir == 1) return 0;
-        else if (dir == 2) return 1;
-        else if (dir == 4) return 2;
-        else return 3;
     }
 
     void GrabWeapon() {
@@ -615,7 +652,13 @@ struct Player {
             world = glm::scale(world, glm::vec3(size, size, 1.f));
             shader.SetMat4("world", world);
 
-            glBindTexture(GL_TEXTURE_2D, texture);
+            float shiftX = 0;
+            if (state == State::Moving) {
+                shiftX = ((DirTo2Bit(direction) + 1) * 56.f) / 305.f;
+            }
+            shader.SetFloat("shiftX", shiftX);
+
+            glBindTexture(GL_TEXTURE_2D, atlas);
             glBindVertexArray(VAO);
             glDrawArrays(GL_TRIANGLES, 0, 6);
         }
@@ -661,7 +704,7 @@ struct Crust {
 
     unsigned int VBO;
     unsigned int VAO;
-    unsigned int texture;
+    //unsigned int texture;
     Shader shader;
     int h;
     int w;
@@ -670,10 +713,10 @@ struct Crust {
 
     Crust(int h_, int w_, std::vector<Slot>& grid_) : shader("crust"), h(h_), w(w_), grid(grid_) {
 
-        MakeRect(0.222f, 0.444f, VAO, VBO);
+        MakeRectWithCoords(16.f / 72.f, 32.f / 72.f, {254.f / 305.f, 275.f / 362.f}, { 270.f / 305.f, 307.f / 362.f }, VAO, VBO);
 
-        int width, height;
-        texture = MakeTexture("crust.png", width, height, false, true);
+        //int width, height;
+        //texture = MakeTexture("crust.png", width, height, false, true);
 
         shader.use();
         glm::mat4 world(1.f);
@@ -693,7 +736,7 @@ struct Crust {
 
         shader.use();
 
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindTexture(GL_TEXTURE_2D, atlas);
         glBindVertexArray(VAO);
 
         for (int x = 0; x < w; ++x) {
@@ -805,7 +848,7 @@ struct Weapon {
 
     unsigned int VBO;
     unsigned int VAO;
-    unsigned int texture;
+    //unsigned int texture;
     Shader shader;
     int h;
     int w;
@@ -828,10 +871,10 @@ struct Weapon {
         ste(ste_)
     {
 
-        MakeRect((0.61111f * 25) / 36, 0.61111f, VAO, VBO);
+        MakeRectWithCoords(30.f / 72.f, 44.f / 72.f, {275.f / 305.f, 263.f / 362.f}, { 305.f / 305.f, 307.f / 362.f }, VAO, VBO);
 
-        int width, height;
-        texture = MakeTexture("sword.png", width, height, false, true);
+        //int width, height;
+        //texture = MakeTexture("sword.png", width, height, false, true);
 
         shader.use();
         glm::mat4 world(1.f);
@@ -875,7 +918,7 @@ struct Weapon {
 
         shader.use();
 
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindTexture(GL_TEXTURE_2D, atlas);
         glBindVertexArray(VAO);
 
         for (int x = 0; x < w; ++x) {
@@ -1123,17 +1166,18 @@ struct RandomGuy {
 
 struct Ghost {
 
-    enum class Color { Red, Yellow, Blue, Brown, Purple };
+    enum class Color { Blue, Yellow, Red, Gray, Purple };
     enum class State { Chase, Scatter, Frightened, Home };
 
     static const char* const texture_array[5];
     static const float speed_array[5];
+    static const float y_array[5];
 
     const int size = 1;
 
     unsigned int VBO;
     unsigned int VAO;
-    unsigned int texture;
+    //unsigned int texture;
     static Shader shader;
     int h;
     int w;
@@ -1180,10 +1224,14 @@ struct Ghost {
         ste(ste_)
     {
 
-        MakeRect(0.7f, 0.7f, VAO, VBO);
+        Point a, b;
+        a = { 0.f, y_array[static_cast<int>(color)] / 362.f };
+        b = { 50.f / 305.f, (y_array[static_cast<int>(color)] + 50.f) / 362.f };
 
-        int width, height;
-        texture = MakeTexture(texture_array[static_cast<int>(color)], width, height, false, true);
+        MakeRectWithCoords(50.f / 72.f, 50.f / 72.f, a, b, VAO, VBO);
+
+        //int width, height;
+        //texture = MakeTexture(texture_array[static_cast<int>(color)], width, height, false, true);
 
         x = 4;
         y = 4;
@@ -1213,7 +1261,7 @@ struct Ghost {
         size(other.size),
         VBO(other.VBO),
         VAO(other.VAO),
-        texture(other.texture),
+        //texture(other.texture),
         h(other.h),
         w(other.w),
         x(other.x),
@@ -1402,7 +1450,7 @@ struct Ghost {
                         target_x = player_x;
                         target_y = player_y;
                     }
-                    else if (color == Color::Brown) {
+                    else if (color == Color::Gray) {
                         if (player_dir & 1) {
                             target_x = player_x;
                             target_y = player_y + 4;
@@ -1577,7 +1625,10 @@ struct Ghost {
         world = glm::scale(world, glm::vec3(size, size, 1.f));
         shader.SetMat4("world", world);
 
-        glBindTexture(GL_TEXTURE_2D, texture);
+        float shiftX = ((DirTo2Bit(direction) + 1) * 50.f) / 305.f;
+        shader.SetFloat("shiftX", shiftX);
+
+        glBindTexture(GL_TEXTURE_2D, atlas);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
@@ -1609,7 +1660,7 @@ struct Ghost {
             scatter_x = -1;
             scatter_y = h;
         }
-        else if (color == Color::Brown) {
+        else if (color == Color::Gray) {
             scatter_x = w;
             scatter_y = h;
         }
@@ -1630,8 +1681,9 @@ struct Ghost {
 
 };
 
-const char* const Ghost::texture_array[5] = { "ghost_red.png", "ghost_yellow.png" , "ghost_blue.png" , "ghost_brown.png", "ghost_purple.png" };
-const float Ghost::speed_array[5] = { 2.f, 0.1f, 1.8f, 1.7f, 1.6f };
+//const char* const Ghost::texture_array[5] = { "ghost_red.png", "ghost_yellow.png" , "ghost_blue.png" , "ghost_brown.png", "ghost_purple.png" };
+const float Ghost::speed_array[5] = { 2.f, 1.9f, 1.8f, 1.7f, 1.6f };
+const float Ghost::y_array[5] = { 312.f, 262.f, 212.f, 162.f, 112.f };
 Shader Ghost::shader;
 
 const char* const Player::texture_array[2] = { "nik.png", "ste.png" };

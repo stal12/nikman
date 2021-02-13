@@ -6,9 +6,10 @@ out vec2 texCoord;
 
 uniform mat4 projection;
 uniform mat4 world;
+uniform float shiftX;
 
 void main()
 {
     gl_Position = projection * world * vec4(aPos.x, aPos.y, -5.0, 1.0);
-    texCoord = aTex;
+    texCoord = vec2(aTex.x + shiftX, aTex.y);
 }

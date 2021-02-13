@@ -10,5 +10,5 @@ uniform mat4 world;
 void main()
 {
     gl_Position = projection * world * vec4(aPos.x, aPos.y, -7.0, 1.0);
-    texCoord = (aTex - vec2(0.5, 0.5)) * 2.0 + vec2(0.5, 0.5);
+    texCoord = aTex;
 }

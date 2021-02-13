@@ -63,7 +63,7 @@ struct Game {
             //"pacman.txt",
             //"level.txt",
             "spispopd1.txt",
-            //"spispopd2.txt",
+            "spispopd2.txt",
             //"level2.txt",
             //"level3.txt",
             //"level4.txt"
@@ -386,9 +386,7 @@ struct Game {
             }
         }
 
-        glEnable(GL_BLEND);
         ui.Render();
-        glDisable(GL_BLEND);
     }
 
     void LoadLevel(const char* filename) {
@@ -412,10 +410,10 @@ struct Game {
 
 };
 
-//const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Yellow, Ghost::Color::Blue, Ghost::Color::Brown, Ghost::Color::Purple };
+const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Yellow, Ghost::Color::Blue, Ghost::Color::Gray, Ghost::Color::Purple };
 //const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Yellow, Ghost::Color::Blue, Ghost::Color::Purple };
 //const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Purple };
-const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Yellow };
+//const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Yellow };
 
 
 #endif // NIKMAN_GAME_H

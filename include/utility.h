@@ -9,6 +9,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 static bool isSte = false;
+static unsigned int atlas;
 
 static constexpr char* const kShaderRoot = "../shaders";
 static constexpr char* const kTextureRoot = "../resources";
@@ -72,5 +73,11 @@ std::string SoundPath(const char* name) {
     return (std::filesystem::path(kSoundsRoot) / std::filesystem::path(name)).string();
 }
 
+unsigned char DirTo2Bit(unsigned char dir) {
+    if (dir == 1) return 0;
+    else if (dir == 2) return 1;
+    else if (dir == 4) return 2;
+    else return 3;
+}
 
 #endif // NIKMAN_UTILITY_H

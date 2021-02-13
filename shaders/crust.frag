@@ -7,6 +7,6 @@ uniform sampler2D crustTexture;
 void main()
 {
     FragColor = texture(crustTexture, texCoord);
-    if (FragColor.a < 0.5)
+    if (FragColor.a < 0.01)
         discard;
 } 

@@ -7,6 +7,6 @@ uniform sampler2D teleportTexture;
 void main()
 {
     FragColor = texture(teleportTexture, texCoord);
-    if (FragColor.a < 0.5)
+    if (FragColor.a < 0.01)
         discard;
 } 

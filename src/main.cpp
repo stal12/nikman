@@ -120,9 +120,13 @@ int main()
     
     stbi_set_flip_vertically_on_load(true);
     
+    int height, width;
+    atlas = MakeTexture("atlas.png", width, height, true, true);   // TODO: è orribile farlo qua, sarebbe bello usare RAII, ma come?
+
     {
         Game game(level);
         glEnable(GL_MULTISAMPLE);
+        glEnable(GL_BLEND);
 
         // Very simple render loop
         float formerFrame = glfwGetTime();
@@ -151,6 +155,8 @@ int main()
         }
 
         // Clean/Delete all of GLFW's resources that were allocated
+
+        glDeleteTextures(1, &atlas);
     }
     glfwTerminate();
     return 0;
