@@ -1,0 +1,5 @@
+Nikman:     56x56 pixel
+Nemici:     50x50 pixel
+Croste:     16x32 pixel
+Coltelli:   30x44 pixel
+Teleport:   55x55 pixel

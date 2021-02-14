@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.17.1)
 
-set (ProjectName "Nikman")
+set (ProjectName "Game")
 
 project (${ProjectName} C CXX)
 
@@ -38,3 +38,15 @@ target_sources(${ProjectName} PRIVATE "${VERTEX_FILES};${FRAGMENT_FILES}")
 
 source_group("Vertex Shaders" REGULAR_EXPRESSION "vert$")
 source_group("Fragment Shaders" REGULAR_EXPRESSION "frag$")
+
+add_executable(Nikman src/launcher.cpp)
+set_property(TARGET Nikman PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+# Install program
+
+install(DIRECTORY shaders DESTINATION .)
+install(DIRECTORY resources DESTINATION .)
+#install(FILES "scripts/Nikman.bat" DESTINATION .)
+install(FILES "3rdparty/OpenAL/openal32.dll" DESTINATION bin)
+install(TARGETS ${ProjectName} RUNTIME DESTINATION bin)
+install(TARGETS Nikman RUNTIME DESTINATION .)

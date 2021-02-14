@@ -1,0 +1,49 @@
+############################
+# Istruzioni sui libellids #
+############################
+
+Dimensioni massime:
+Altezza 14
+Larghezza 26
+
+Il contenuto di ogni casella è interpretato tramite la legenda seguente:
+
+' ' -> crosta, è il default
+'n' -> posizione iniziale di Nik
+'s' -> posizione iniziale di Ste
+'m' -> mud, ovvero terreno non calpestabile; deve sempre esserci un muro a separarlo dal terreno calpestabile
+'h' -> home, ovvero casa dei nemici; le caselle di home devono essere contigue e deve esserci almeno un'uscita
+'t' -> teletrasporco
+'e' -> empty, non c'è nulla
+'w' -> weapon, ovvero pugnale
+
+Come esempi ci sono i primi due libellids di Amazin' SPISPOPD.
+
+Un file libellods può avere qualunque estensione, anche nessuna, ma .txt mi sembra un'ottima scelta.
+
+
+Per editare un file libellods, consiglio Notepad++.
+
+Un paio di suggerimenti pratici:
+1)  Premi il tasto Ins prima di editare un libellods, lo trovi vicino a Canc.
+    In questo modo, sovrascrivi direttamente i caratteri, invece che dover scrivere e cancellare.
+    Ricordati di premere nuovamente Ins dopo aver finito!
+    
+2) Su Notepad++ è presente la selezione rettangolare: Maiusc + Alt
+   Tenendo premuti Maiusc e Alt, selezioni il rettangolo con il mouse o con le frecce.
+   È utile per copiare appunto sezioni rettangolari del libellods.
+
+
+Lo script init_maze.py inizializza un libellods, mettendo i muri esterni e tutti gli incroci interni, ovvero i '+'.
+Non è fondamentale, ma può far risparmiare un pochettino di lavoro.
+Occorre Python 3.
+Dovrebbe bastare un doppio click, se non va si può provare ad invocarlo dalla riga di comando.
+Dalla finestra di esplora risorse, quella della cartella corrente, click sul percorso, dove sta scritto ad esempio "Questo PC > Disco locale (C:) > ... > libellids"
+Cancella il percorso che c'è scritto (!) e al suo posto scrivi "cmd", poi invio.
+Scrivi "python init_maze.py", invio.
+
+Se hai python, ma non va, controlla di avere python 3 e non python 2.
+Sempre da riga di comando (cmd) scrivi "python", invio, guarda se è il 2 o il 3.
+Se è il 2, brucia il computer! Poi comprane un altro ed installaci il 3.
+
+Fine delle istruzioni. Buona creazione!

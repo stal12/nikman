@@ -12,9 +12,10 @@ static bool isSte = false;
 static unsigned int atlas;
 
 static constexpr char* const kShaderRoot = "../shaders";
-static constexpr char* const kTextureRoot = "../resources";
+static constexpr char* const kTextureRoot = "../resources/textures";
 static constexpr char* const kLevelRoot = "../resources/levels";
 static constexpr char* const kSoundsRoot = "../resources/sounds";
+static constexpr char* const kFontRoot = "../resources/fonts";
 static constexpr char* const kScoresPath = "highscores.txt";
 
 static constexpr float kRatio = 16.f / 9.f;
@@ -32,7 +33,7 @@ static const glm::mat4 kProjection = glm::ortho(
     0.1f, 
     10.f);
 
-unsigned int MakeTexture(const char* filename, int& width, int& height, bool nearest = false, bool alpha = false) {
+unsigned int MakeTextureGeneral(const char* filename, int& width, int& height, bool nearest = false, bool alpha = false) {
     // Texture 
     unsigned int texture;
     glGenTextures(1, &texture);
@@ -49,11 +50,7 @@ unsigned int MakeTexture(const char* filename, int& width, int& height, bool nea
     // load and generate the texture
     int nrChannels;
 
-    std::filesystem::path texture_path = std::filesystem::path(kTextureRoot) / std::filesystem::path(filename);
-    std::string texture_path_string = texture_path.string();
-    const char* texture_path_cstring = texture_path_string.c_str();
-
-    unsigned char* data = stbi_load(texture_path_cstring, &width, &height, &nrChannels, 0);
+    unsigned char* data = stbi_load(filename, &width, &height, &nrChannels, 0);
     if (data)
     {
         //GLenum format = alpha ? GL_RGBA : GL_RGB;
@@ -69,8 +66,34 @@ unsigned int MakeTexture(const char* filename, int& width, int& height, bool nea
     return texture;
 }
 
+unsigned int MakeTexture(const char* filename, int& width, int& height, bool nearest = false, bool alpha = false) {
+
+    std::filesystem::path texture_path = std::filesystem::path(kTextureRoot) / std::filesystem::path(filename);
+    std::string texture_path_string = texture_path.string();
+    const char* texture_path_cstring = texture_path_string.c_str();
+
+    return MakeTextureGeneral(texture_path_cstring, width, height, nearest, alpha);
+}
+
+unsigned int MakeFontTexture(const char* filename, int& width, int& height, bool nearest = false, bool alpha = false) {
+
+    std::filesystem::path texture_path = std::filesystem::path(kFontRoot) / std::filesystem::path(filename);
+    std::string texture_path_string = texture_path.string();
+    const char* texture_path_cstring = texture_path_string.c_str();
+
+    return MakeTextureGeneral(texture_path_cstring, width, height, nearest, alpha);
+}
+
 std::string SoundPath(const char* name) {
     return (std::filesystem::path(kSoundsRoot) / std::filesystem::path(name)).string();
+}
+
+std::string TexturePath(const char* name) {
+    return (std::filesystem::path(kTextureRoot) / std::filesystem::path(name)).string();
+}
+
+std::string FontPath(const char* name) {
+    return (std::filesystem::path(kFontRoot) / std::filesystem::path(name)).string();
 }
 
 unsigned char DirTo2Bit(unsigned char dir) {

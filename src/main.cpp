@@ -93,8 +93,8 @@ int main()
 
     // Create window object
     glfwWindowHint(GLFW_SAMPLES, 4);    // MSAA
-    //GLFWwindow* window = glfwCreateWindow(kWindowWidth, kWindowHeight, "Nikman", glfwGetPrimaryMonitor(), NULL);
-    GLFWwindow* window = glfwCreateWindow(kWindowWidth, kWindowHeight, "Nikman", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(kWindowWidth, kWindowHeight, "Nikman", glfwGetPrimaryMonitor(), NULL);
+    //GLFWwindow* window = glfwCreateWindow(kWindowWidth, kWindowHeight, "Nikman", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;

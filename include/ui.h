@@ -116,7 +116,7 @@ bool ReadFont(const char* filename, Font& font) {
 
     // Texture
     stbi_set_flip_vertically_on_load(false);
-    font.texture = MakeTexture("F:/progetti miei/nikman/resources/fonts/centaur_regular_32.PNG", font.texture_width, font.texture_height, false, true);
+    font.texture = MakeFontTexture("centaur_regular_32.png", font.texture_width, font.texture_height, false, true);
     stbi_set_flip_vertically_on_load(true);
     return true;
 
@@ -454,7 +454,7 @@ struct UI {
     std::map<std::string, std::pair<Panel, bool>> panel_map;
 
     UI() : shader("glyph"), shader_background("background") {
-        if (!ReadFont("F:/progetti miei/nikman/resources/fonts/centaur_regular_32.xml", font)) {
+        if (!ReadFont((std::filesystem::path(kFontRoot) / std::filesystem::path("centaur_regular_32.xml")).string().c_str(), font)) {
             std::cerr << "Error in UI constructor: can't read font!\n";
         }
 

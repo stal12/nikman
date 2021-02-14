@@ -62,11 +62,18 @@ struct Game {
         level_filenames = {
             //"pacman.txt",
             //"level.txt",
-            "spispopd1.txt",
-            "spispopd2.txt",
+            //"spispopd1.txt",
+            //"spispopd2.txt",
             //"level2.txt",
             //"level3.txt",
             //"level4.txt"
+            "livello1.txt",
+            "livello2.txt",
+            "livello3.txt",
+            "livello4.txt",
+            "livello_jemel.txt",
+            "livello_ragno.txt",
+            "livello_uccello.txt",
         };
 
         Ghost::shader = Shader("ghost");
