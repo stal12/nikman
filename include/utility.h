@@ -54,7 +54,7 @@ unsigned int MakeTextureGeneral(const char* filename, int& width, int& height, b
     if (data)
     {
         //GLenum format = alpha ? GL_RGBA : GL_RGB;
-        GLint internal_format = alpha ? GL_RGBA : GL_RGB;
+        GLint internal_format = alpha ? GL_SRGB_ALPHA : GL_SRGB;
         glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         //glGenerateMipmap(GL_TEXTURE_2D);
     }

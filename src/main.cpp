@@ -93,8 +93,8 @@ int main()
 
     // Create window object
     glfwWindowHint(GLFW_SAMPLES, 4);    // MSAA
-    GLFWwindow* window = glfwCreateWindow(kWindowWidth, kWindowHeight, "Nikman", glfwGetPrimaryMonitor(), NULL);
-    //GLFWwindow* window = glfwCreateWindow(kWindowWidth, kWindowHeight, "Nikman", NULL, NULL);
+    //GLFWwindow* window = glfwCreateWindow(kWindowWidth, kWindowHeight, "Nikman", glfwGetPrimaryMonitor(), NULL);
+    GLFWwindow* window = glfwCreateWindow(kWindowWidth, kWindowHeight, "Nikman", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -127,6 +127,7 @@ int main()
         Game game(level);
         glEnable(GL_MULTISAMPLE);
         glEnable(GL_BLEND);
+        glEnable(GL_FRAMEBUFFER_SRGB);
 
         // Very simple render loop
         float formerFrame = glfwGetTime();
@@ -145,7 +146,7 @@ int main()
             game.Update(delta, wasd, stop_game);
 
             // Render
-            glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+            glClearColor(0.01f, 0.01f, 0.01f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
             game.Render();
 

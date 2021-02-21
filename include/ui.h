@@ -244,15 +244,6 @@ struct Writing {
 
         }
 
-        //float prova[] = {
-        //    x + g.ox, y - g.oy, g.x, g.y,
-        //    x + g.ox + g.w, y - g.oy, g.x + g.w, g.y,
-        //    x + g.ox, y - g.oy - g.h, g.x, g.y + g.h,
-        //    x + g.ox + g.w, y - g.oy, g.x + g.w, g.y,
-        //    x + g.ox, y - g.oy - g.h, g.x, g.y + g.h,
-        //    x + g.ox + g.w, y - g.oy - g.h, g.x + g.w, g.y + g.h,
-        //};
-
         for (int i = 0; i < len * 24; ) {
             i += 2;
             vertices[i++] /= font.texture_width;
@@ -483,7 +474,7 @@ struct UI {
         AddPanel("game_over", std::move(game_over), false);
 
         Panel game_ui(500, 1075);
-        game_ui.AddWriting("Lives: 3", 0, 0, font, true, false);
+        game_ui.AddWriting("Lives: 3 ", 0, 0, font, true, false);
         game_ui.AddWriting("Score: 0   ", 450, 0, font, true, false);
         AddPanel("game_ui", std::move(game_ui), false);
 
@@ -492,8 +483,8 @@ struct UI {
         pause.AddWriting("Back to menu", 0, -font.h_space, font, false);
         AddPanel("pause", std::move(pause), false);
 
-        Panel transition(740, 600, 120, font.h_space);
-        transition.AddWriting("Stage 1", 5, 0, font, true, false);
+        Panel transition(740, 600, 140, font.h_space);
+        transition.AddWriting("Stage  1", 5, 0, font, true, false);
         AddPanel("transition", std::move(transition), false);
 
     }

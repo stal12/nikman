@@ -12,6 +12,7 @@
 
 enum class GameState { MainMenu, Game, End, Over, Pause, Transition };
 
+
 struct Game {
 
     std::vector<std::string> level_filenames;
@@ -34,7 +35,7 @@ struct Game {
     unsigned int prev_wasd = 0;
     int main_menu_selected = 0;
     int pause_menu_selected = 0;
-    const float kTransitionDuration = 2.f;
+    const float kTransitionDuration = 1.f;
     float transition_t;
     int score = 0;
 
@@ -45,6 +46,18 @@ struct Game {
 
     std::random_device rd;
     std::mt19937 mt;
+
+    sf::SoundBuffer gameOverBuffer;
+    sf::Sound gameOver;
+
+    sf::SoundBuffer endLevelBuffer;
+    sf::Sound endLevel;
+
+    sf::SoundBuffer grabWeaponBuffer;
+    sf::Sound grabWeapon;
+
+    sf::SoundBuffer winBuffer;
+    sf::Sound win;
 
     Game(const LevelDesc& level) :
         state(GameState::MainMenu),
@@ -71,9 +84,12 @@ struct Game {
             "livello2.txt",
             "livello3.txt",
             "livello4.txt",
+            "livello5.txt",
             "livello_jemel.txt",
             "livello_ragno.txt",
+            "livello_cervello.txt",
             "livello_uccello.txt",
+            "livello_scimmia.txt",
         };
 
         Ghost::shader = Shader("ghost");
@@ -93,6 +109,27 @@ struct Game {
 
         ui.panel_map.at("main_menu").first.writings[main_menu_selected].highlighted = true;
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+
+        if (!gameOverBuffer.loadFromFile(SoundPath("arato.wav"))) {
+            std::cerr << "Game::Game: can't open file \"arato.wav\"\n";
+        }
+        gameOver.setBuffer(gameOverBuffer);
+
+        if (!grabWeaponBuffer.loadFromFile(SoundPath("nooo.wav"))) {
+            std::cerr << "Game::Game: can't open file \"nooo.wav\"\n";
+        }
+        grabWeapon.setBuffer(grabWeaponBuffer);
+
+        if (!endLevelBuffer.loadFromFile(SoundPath("concettualmente.wav"))) {
+            std::cerr << "Game::Game: can't open file \"concettualmente.wav\"\n";
+        }
+        endLevel.setBuffer(endLevelBuffer);
+
+        if (!winBuffer.loadFromFile(SoundPath("luna.wav"))) {
+            std::cerr << "Game::Game: can't open file \"luna.wav\"\n";
+        }
+        win.setBuffer(winBuffer);
 
     }
 
@@ -178,14 +215,15 @@ struct Game {
             }
 
             if(hitNik || hitSte) {
-                char str[] = "Lives: x";
-                str[7] = '0' + nik.lives;
+                char str[] = "Lives: 00";
+                snprintf(str + 7, 3, "%d", nik.lives);
                 ui.panel_map.at("game_ui").first.writings[0].Update(str);
 
                 if (nik.lives <= 0) {
+                    gameOver.play();
                     state = GameState::Over;
                     char strScore[] = "Score: 0   ";
-                    snprintf(strScore + 7, 4, "%d", score);
+                    snprintf(strScore + 7, 5, "%d", score);
                     ui.panel_map.at("game_over").first.writings[1].Update(strScore);
 
                     ui.panel_map.at("game_over").second = true;
@@ -194,22 +232,24 @@ struct Game {
             }
 
             map.remaining_crusts -= eaten;
-            if (map.remaining_crusts <= 0) {
+            if (map.remaining_crusts <= 0 || (wasd == 2 + 4 + 8 && prev_wasd != 2 + 4 + 8)) {
                 // Fine livello!
                 current_level++;
                 if (current_level == level_filenames.size()) {
-                    state = GameState::End;
+                    win.play();
+                    state = GameState::End;                    
                     char strScore[] = "Score: 0   ";
-                    snprintf(strScore + 7, 4, "%d", score);
+                    snprintf(strScore + 7, 5, "%d", score);
                     ui.panel_map.at("end_game").first.writings[1].Update(strScore);
 
                     ui.panel_map.at("end_game").second = true;
                     ui.panel_map.at("game_ui").second = false;
                 }
                 else {
+                    endLevel.play();
                     LoadLevel(level_filenames[current_level].c_str());
-                    char str[] = "Stage x";
-                    str[6] = '1' + current_level;   // TODO: support 10 levels or more
+                    char str[] = "Stage xx";
+                    snprintf(str + 6, 3, "%2d", current_level + 1);
                     ui.panel_map.at("transition").first.writings[0].Update(str);
                     state = GameState::Transition;
                     transition_t = 0;
@@ -219,6 +259,7 @@ struct Game {
 
             if (grabWeaponNik) {
                 nik.GrabWeapon();
+                grabWeapon.play();
                 for (auto& ghost : ghosts) {
                     ghost.Frighten();
                 }
@@ -226,21 +267,9 @@ struct Game {
 
             if (grabWeaponSte) {
                 ste.GrabWeapon();
+                grabWeapon.play();
                 for (auto& ghost : ghosts) {
                     ghost.Frighten();
-                }
-            }
-
-            // TODO: Rimuovere questo metodo di debug
-            if (wasd == 2 + 4 + 8 && prev_wasd != 2 + 4 + 8) {
-                current_level++;
-                if (current_level == level_filenames.size()) {
-                    state = GameState::End;
-                    ui.panel_map.at("end_game").second = true;
-                    ui.panel_map.at("game_ui").second = false;
-                }
-                else {
-                    LoadLevel(level_filenames[current_level].c_str());
                 }
             }
 
@@ -249,13 +278,13 @@ struct Game {
             if (scoreDelta) {
                 if ((score + scoreDelta) / lifePrice > score / lifePrice) {
                     nik.lives++;
-                    char str[] = "Lives: x";
-                    str[7] = '0' + nik.lives;
+                    char str[] = "Lives: 00";
+                    snprintf(str + 7, 3, "%d", nik.lives);
                     ui.panel_map.at("game_ui").first.writings[0].Update(str);
                 }
                 score += scoreDelta;
                 char strScore[] = "Score: 0   ";
-                snprintf(strScore + 7, 4, "%d", score);
+                snprintf(strScore + 7, 5, "%d", score);
                 ui.panel_map.at("game_ui").first.writings[1].Update(strScore);
             }
         }
@@ -276,14 +305,14 @@ struct Game {
                     ui.panel_map.at("game_ui").second = true;
                     ui.panel_map.at("main_menu").second = false;
                     state = GameState::Transition;
-                    char str[] = "Stage x";
-                    str[6] = '1' + current_level;
+                    char str[] = "Stage xx";
+                    snprintf(str + 6, 3, "%2d", current_level + 1);
                     ui.panel_map.at("transition").first.writings[0].Update(str);
                     ui.panel_map.at("transition").second = true;
                     transition_t = 0;
 
-                    char strLives[] = "Lives: x";
-                    strLives[7] = '0' + nik.lives;
+                    char strLives[] = "Lives: 00";
+                    snprintf(strLives + 7, 3, "%d", nik.lives);
                     ui.panel_map.at("game_ui").first.writings[0].Update(strLives);
 
                     char strScore[] = "Score: 0   ";
@@ -405,22 +434,22 @@ struct Game {
         home.LoadLevel(level, level.home);
         wall.LoadLevel(level);
         teleport.LoadLevel(level);
-        nik.LoadLevel(level);
-        if(isSte) ste.LoadLevel(level);
+        nik.LoadLevel(level, current_level);
+        if(isSte) ste.LoadLevel(level, current_level);
         crust.LoadLevel(level);
         weapon.LoadLevel(level);
         for (auto& ghost : ghosts) {
-            ghost.LoadLevel(level);
+            ghost.LoadLevel(level, current_level);
         }        
 
     }
 
 };
 
-const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Yellow, Ghost::Color::Blue, Ghost::Color::Gray, Ghost::Color::Purple };
+const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Yellow, Ghost::Color::Blue, Ghost::Color::Purple };
 //const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Yellow, Ghost::Color::Blue, Ghost::Color::Purple };
 //const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Purple };
-//const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Yellow };
+//const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Blue };
 
 
 #endif // NIKMAN_GAME_H
