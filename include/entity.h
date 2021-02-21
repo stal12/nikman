@@ -143,31 +143,34 @@ struct Slot {
 
 struct Map {
 
-    int h = 5;
-    int w = 5;
+    int h;
+    int w;
 
     unsigned int VBO;
     unsigned int VAO;
-    unsigned int texture;
+    //unsigned int texture;
     Shader shader;
-    int remaining_crusts = h * w;
+    int remaining_crusts;
 
     std::vector<Slot> grid;
 
-    Map(int h_, int w_, const LevelDesc& level) : shader("map"), h(h_), w(w_), grid(h* w) {
+    Map() : shader("map") {
 
         MakeRect(1.f, 1.f, VAO, VBO);
 
         int width, height;
-        texture = MakeTexture("map.png", width, height, false);
+        //texture = MakeTexture("map.png", width, height, false);
 
         shader.use();
         glm::mat4 world(1.f);
         world = glm::scale(world, glm::vec3(w, h, 1.f));
         shader.SetMat4("world", world);
         shader.SetMat4("projection", kProjection);
-
-        FillWalls(level.ver_walls, level.hor_walls);
+        
+        shader.SetFloat("x_s", 311.f / 383.f);
+        shader.SetFloat("x_e", 383.f / 383.f);
+        shader.SetFloat("y_s", 296.f / 368.f );
+        shader.SetFloat("y_e", 368.f / 368.f );
 
     }
 
@@ -178,7 +181,7 @@ struct Map {
 
     void Render() const {
         shader.use();
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindTexture(GL_TEXTURE_2D, atlas);
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 6);
     }
@@ -249,8 +252,12 @@ struct Map {
         shader.SetFloat("w", (float)w);
     }
 
-};
+    Map(const Map& other) = delete;
+    Map(Map&& other) = delete;
+    Map& operator=(const Map& other) = delete;
+    Map& operator=(Map&& other) = delete;
 
+};
 
 struct Wall {
 
@@ -258,29 +265,26 @@ struct Wall {
 
     unsigned int VBO;
     unsigned int VAO;
-    unsigned int texture;
+    //unsigned int texture;
     Shader shader;
     std::vector<std::pair<int, int>> ver_positions;
     std::vector<std::pair<int, int>> hor_positions;
-    float h = 5.f;
-    float w = 5.f;
+    float h;
+    float w;
 
-    Wall(float h_, float w_, LevelDesc level_) : shader("wall"), h(h_), w(w_) {
+    Wall() : shader("wall") {
 
-        //MakeRectWithCoords(0.2f, 1.2f, {255.f / 310.f, 157.f / 368.f}, { 275.f / 310.f, 257.f / 368.f }, VAO, VBO);
-        MakeRect(14.f / 72.f, 86.f / 72.f, VAO, VBO);
+        MakeRectWithCoords(14.f / 72.f, 86.f / 72.f, {265.f / 383.f, 169.f / 368.f}, { 279.f / 383.f, 255.f / 368.f }, VAO, VBO);
+        //MakeRect(14.f / 72.f, 86.f / 72.f, VAO, VBO);
 
         int width, height;
-        texture = MakeTexture("wall.png", width, height, true);
+        //texture = MakeTexture("wall.png", width, height, true);
 
         shader.use();
         glm::mat4 world(1.f);
         world = glm::scale(world, glm::vec3(size, size, 1.f));
         shader.SetMat4("world", world);
         shader.SetMat4("projection", kProjection);
-
-        ver_positions = level_.ver_walls;
-        hor_positions = level_.hor_walls;
 
     }
 
@@ -291,7 +295,7 @@ struct Wall {
 
     void Render() const {
         shader.use();
-        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindTexture(GL_TEXTURE_2D, atlas);
         glBindVertexArray(VAO);
 
         // TODO: use instancing
@@ -330,8 +334,12 @@ struct Wall {
         hor_positions = level.hor_walls;
     }
 
-};
+    Wall(const Wall& other) = delete;
+    Wall(Wall&& other) = delete;
+    Wall& operator=(const Wall& other) = delete;
+    Wall& operator=(Wall&& other) = delete;
 
+};
 
 struct Teleport {
 
@@ -346,16 +354,15 @@ struct Teleport {
     std::vector<std::pair<int, int>> teleports;
 
     std::vector<Slot>& grid;
-    std::random_device rd;
-    std::mt19937 mt;
+    std::mt19937& mt;
 
     sf::SoundBuffer soundBuffer;
     sf::Sound sound;
 
 
-    Teleport(int h_, int w_, std::vector<Slot>& grid_) : shader("teleport"), h(h_), w(w_), grid(grid_), mt(rd()) {
+    Teleport(std::vector<Slot>& grid_, std::mt19937& mt_) : shader("teleport"), grid(grid_), mt(mt_) {
 
-        MakeRectWithCoords(55.f / 72.f, 55.f / 72.f, {255.f / 310.f, 313.f / 368.f}, { 310.f / 310.f, 368.f / 368.f }, VAO, VBO);
+        MakeRectWithCoords(55.f / 72.f, 55.f / 72.f, {255.f / 383.f, 313.f / 368.f}, { 310.f / 383.f, 368.f / 368.f }, VAO, VBO);
 
         //int width, height;
         //texture = MakeTexture("teleport.png", width, height, false, true);
@@ -423,12 +430,17 @@ struct Teleport {
         }
     }
 
+    Teleport(const Teleport& other) = delete;
+    Teleport(Teleport&& other) = delete;
+    Teleport& operator=(const Teleport& other) = delete;
+    Teleport& operator=(Teleport&& other) = delete;
+
 };
 
 struct Player {
 
     enum class Name { Nik, Ste };
-    static const char* const texture_array[2];
+    //static const char* const texture_array[2];
 
     const int size = 1;
 
@@ -474,11 +486,9 @@ struct Player {
     sf::SoundBuffer gnamBuffer;
     sf::Sound gnam;
 
-    Player(Name name_, int h_, int w_, std::vector<Slot>& grid_, Teleport& teleport_) :
+    Player(Name name_, std::vector<Slot>& grid_, Teleport& teleport_) :
         name(name_),
         shader("player"),
-        h(h_),
-        w(w_),
         grid(grid_),
         teleport(teleport_)
     {
@@ -486,11 +496,11 @@ struct Player {
         Point a, b;
         if (name == Name::Nik) {
             a = { 0.f, 57.f / 368.f };
-            b = { 56.f / 310.f, 113.f / 368.f };
+            b = { 56.f / 383.f, 113.f / 368.f };
         }
         else {
             a = { 0.f, 0.f };
-            b = { 56.f / 310.f, 56.f / 368.f };
+            b = { 56.f / 383.f, 56.f / 368.f };
         }
 
         MakeRectWithCoords(56.f / 72.f, 56.f / 72.f, a, b, VAO, VBO);
@@ -691,7 +701,7 @@ struct Player {
 
             float shiftX = 0;
             if (state == State::Moving) {
-                shiftX = ((DirTo2Bit(direction) + 1) * 57.f) / 310.f;
+                shiftX = ((DirTo2Bit(direction) + 1) * 57.f) / 383.f;
             }
             shader.SetFloat("shiftX", shiftX);
 
@@ -734,6 +744,11 @@ struct Player {
         shader.SetMat4("world", world);
     }
 
+    Player(const Player& other) = delete;
+    Player(Player&& other) = delete;
+    Player& operator=(const Player& other) = delete;
+    Player& operator=(Player&& other) = delete;
+
 };
 
 struct Crust {
@@ -749,9 +764,9 @@ struct Crust {
 
     std::vector<Slot>& grid;
 
-    Crust(int h_, int w_, std::vector<Slot>& grid_) : shader("crust"), h(h_), w(w_), grid(grid_) {
+    Crust(std::vector<Slot>& grid_) : shader("crust"), grid(grid_) {
 
-        MakeRectWithCoords(16.f / 72.f, 32.f / 72.f, {260.f / 310.f, 278.f / 368.f}, { 276.f / 310.f, 310.f / 368.f }, VAO, VBO);
+        MakeRectWithCoords(16.f / 72.f, 32.f / 72.f, {260.f / 383.f, 278.f / 368.f}, { 276.f / 383.f, 310.f / 368.f }, VAO, VBO);
 
         //int width, height;
         //texture = MakeTexture("crust.png", width, height, false, true);
@@ -809,6 +824,10 @@ struct Crust {
 
     }
 
+    Crust(const Crust& other) = delete;
+    Crust(Crust&& other) = delete;
+    Crust& operator=(const Crust& other) = delete;
+    Crust& operator=(Crust&& other) = delete;
 
 };
 
@@ -825,7 +844,7 @@ struct Tile {
 
     std::vector<std::pair<int, int>> pos;
 
-    Tile(const char* name, int h_, int w_, std::vector<std::pair<int, int>> pos_) : shader("tile"), h(h_), w(w_), pos(pos_) {
+    Tile(const char* name) : shader("tile") {
 
         MakeRect(1.f, 1.f, VAO, VBO);
 
@@ -877,6 +896,10 @@ struct Tile {
 
     }
 
+    Tile(const Tile& other) = delete;
+    Tile(Tile&& other) = delete;
+    Tile& operator=(const Tile& other) = delete;
+    Tile& operator=(Tile&& other) = delete;
 
 };
 
@@ -900,16 +923,14 @@ struct Weapon {
     const Player& ste;
 
 
-    Weapon(int h_, int w_, std::vector<Slot>& grid_, const Player& nik_, const Player& ste_) :
+    Weapon(std::vector<Slot>& grid_, const Player& nik_, const Player& ste_) :
         shader("sword"),
-        h(h_),
-        w(w_),
         grid(grid_),
         nik(nik_),
         ste(ste_)
     {
 
-        MakeRectWithCoords(30.f / 72.f, 44.f / 72.f, {279.f / 310.f, 266.f / 368.f}, { 309.f / 310.f, 310.f / 368.f }, VAO, VBO);
+        MakeRectWithCoords(30.f / 72.f, 44.f / 72.f, {279.f / 383.f, 266.f / 368.f}, { 309.f / 383.f, 310.f / 368.f }, VAO, VBO);
 
         //int width, height;
         //texture = MakeTexture("sword.png", width, height, false, true);
@@ -1009,182 +1030,10 @@ struct Weapon {
 
     }
 
-
-};
-
-struct RandomGuy {
-
-    const int size = 1;
-
-    unsigned int VBO;
-    unsigned int VAO;
-    unsigned int texture;
-    Shader shader;
-    int h;
-    int w;
-
-    int x, y;
-    int next_x, next_y;
-    float precise_x, precise_y;
-    float t = 0;
-    const float speed = 2.f;
-    unsigned char direction;
-
-    std::vector<Slot>& grid;
-
-    std::random_device rd;
-    std::mt19937 mt;
-
-
-    RandomGuy(int h_, int w_, std::vector<Slot>& grid_) : shader("RandomGuy"), h(h_), w(w_), grid(grid_), mt(rd()) {
-
-        MakeRect(0.4f, 0.4f, VAO, VBO);
-
-        int width, height;
-        texture = MakeTexture("RandomGuy.png", width, height, false, true);
-
-        x = 4;
-        y = 4;
-        next_x = 3;
-        next_y = 4;
-        direction = 2;  // A
-
-        shader.use();
-        glm::mat4 world(1.f);
-        world = glm::translate(world, glm::vec3(
-            -w / 2.f + size / 2.f + size * (x * (1 - t) + next_x * t),
-            -h / 2.f + size / 2.f + size * (y * (1 - t) + next_y * t),
-            0.f)
-        );
-        world = glm::scale(world, glm::vec3(size, size, 1.f));
-        shader.SetMat4("world", world);
-        shader.SetMat4("projection", kProjection);
-
-    }
-
-    ~RandomGuy() {
-        glDeleteBuffers(1, &VBO);
-        glDeleteVertexArrays(1, &VAO);
-    }
-
-    void SetNewDir() {
-
-        const unsigned char walls = grid[y * w + x].data & 15;
-
-        const unsigned char possible_dirs = ~walls & 15;
-
-        const unsigned char backward_dir = (direction >> 2) | ((direction << 2) & 15);
-
-        const unsigned char possible_dirs_without_back = possible_dirs & ~backward_dir;
-
-        if (possible_dirs_without_back == 0) {
-            direction = backward_dir;
-        }
-        else {
-            const int n_dirs = std::bitset<8>(possible_dirs_without_back).count();
-            if (n_dirs == 1) {
-                direction = possible_dirs_without_back;
-            }
-            else {
-                std::uniform_int_distribution dist(0, n_dirs - 1);
-                int random_int = dist(mt);
-
-                int i;
-                for (i = 0; i < 4; ++i) {
-                    if (!(possible_dirs_without_back & (1 << i))) {
-                        continue;
-                    }
-                    if (random_int == 0) {
-                        break;
-                    }
-                    random_int--;
-                }
-
-                direction = (1 << i);
-            }
-        }
-    }
-
-    void SetNextXY() {
-        if (direction & 1) {
-            next_x = x;
-            next_y = y + 1;
-        }
-        else if (direction & 2) {
-            next_x = x - 1;
-            next_y = y;
-        }
-        else if (direction & 4) {
-            next_x = x;
-            next_y = y - 1;
-        }
-        else {
-            next_x = x + 1;
-            next_y = y;
-        }
-    }
-
-    void Update(float delta, float player_x, float player_y, bool& hit_player) {
-
-        t += delta * speed;
-        if (t >= 1.f) {
-            x = next_x;
-            y = next_y;
-            t -= 1.f;
-            SetNewDir();
-            SetNextXY();
-        }
-
-        precise_x = x * (1 - t) + next_x * t;
-        precise_y = y * (1 - t) + next_y * t;
-
-        // Check collision with player
-        constexpr float threshold = 0.1;
-        float squared_dist = (precise_x - player_x) * (precise_x - player_x) + (precise_y - player_y) * (precise_y - player_y);
-        if (squared_dist < threshold) {
-            hit_player = true;
-        }
-
-    }
-
-    void Render() const {
-        shader.use();
-
-        glm::mat4 world(1.f);
-        world = glm::translate(world, glm::vec3(
-            -w / 2.f + size / 2.f + size * precise_x,
-            -h / 2.f + size / 2.f + size * precise_y,
-            0.f)
-        );
-        world = glm::scale(world, glm::vec3(size, size, 1.f));
-        shader.SetMat4("world", world);
-
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
-    }
-
-    void LoadLevel(const LevelDesc& level) {
-        h = level.h;
-        w = level.w;
-        x = level.home.front().first;   // TODO: implement enemy beginning
-        y = level.home.front().second;
-        next_x = x;
-        next_y = y;
-        precise_x = x;
-        precise_y = y;
-        t = 0;
-
-        shader.use();
-        glm::mat4 world(1.f);
-        world = glm::translate(world, glm::vec3(
-            -w / 2.f + size / 2.f + size * (x * (1 - t) + next_x * t),
-            -h / 2.f + size / 2.f + size * (y * (1 - t) + next_y * t),
-            0.f)
-        );
-        world = glm::scale(world, glm::vec3(size, size, 1.f));
-        shader.SetMat4("world", world);
-    }
+    Weapon(const Weapon& other) = delete;
+    Weapon(Weapon&& other) = delete;
+    Weapon& operator=(const Weapon& other) = delete;
+    Weapon& operator=(Weapon&& other) = delete;
 
 };
 
@@ -1239,12 +1088,10 @@ struct Ghost {
     sf::SoundBuffer soundBuffer;
     sf::Sound sound;
 
-    Ghost(Color color_, int h_, int w_, std::vector<Slot>& grid_, Teleport& teleport_, std::mt19937& mt_, const Player& nik_, const Player& ste_) :
+    Ghost(Color color_, std::vector<Slot>& grid_, Teleport& teleport_, std::mt19937& mt_, const Player& nik_, const Player& ste_) :
         color(color_),
         state(State::Home),
         baseSpeed(speed_array[static_cast<int>(color_)] * 2.f),
-        h(h_),
-        w(w_),
         grid(grid_),
         mt(mt_),
         teleport(teleport_),
@@ -1254,7 +1101,7 @@ struct Ghost {
 
         Point a, b;
         a = { 0.f, y_array[static_cast<int>(color)] / 368.f };
-        b = { 50.f / 310.f, (y_array[static_cast<int>(color)] + 50.f) / 368.f };
+        b = { 50.f / 383.f, (y_array[static_cast<int>(color)] + 50.f) / 368.f };
 
         MakeRectWithCoords(50.f / 72.f, 50.f / 72.f, a, b, VAO, VBO);
 
@@ -1613,15 +1460,15 @@ struct Ghost {
 
     void Update(float delta, float red_x, float red_y, bool& hitNik, bool& hitSte) {
 
-        // TODO: also chase Ste
         state_t += delta;
         if (state == State::Chase) {
-            if (state_t >= chase_duration) {
-                state = State::Scatter;
-                target_x = scatter_x;
-                target_y = scatter_y;
-                state_t = 0;
-            }
+            // Scatter mode does not exist anymore
+            //if (state_t >= chase_duration) {
+            //    state = State::Scatter;
+            //    target_x = scatter_x;
+            //    target_y = scatter_y;
+            //    state_t = 0;
+            //}
         }
         else if (state == State::Scatter) {
             if (state_t >= scatter_duration) {
@@ -1715,7 +1562,7 @@ struct Ghost {
         world = glm::scale(world, glm::vec3(size, size, 1.f));
         shader.SetMat4("world", world);
 
-        float shiftX = ((DirTo2Bit(direction) + 1) * 51.f) / 310.f;
+        float shiftX = ((DirTo2Bit(direction) + 1) * 51.f) / 383.f;
         shader.SetFloat("shiftX", shiftX);
 
         glBindTexture(GL_TEXTURE_2D, atlas);
@@ -1778,7 +1625,7 @@ const float Ghost::y_array[5] = { 216.f, 267.f, 318.f, 114.f, 165.f };
 const char* const Ghost::sound_array[5] = { "numeri.wav", "numeri.wav", "numeri.wav", "numeri.wav", "numeri.wav" };
 Shader Ghost::shader;
 
-const char* const Player::texture_array[2] = { "nik.png", "ste.png" };
+//const char* const Player::texture_array[2] = { "nik.png", "ste.png" };
 
 int Player::lives;
 

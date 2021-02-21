@@ -39,8 +39,10 @@ target_sources(${ProjectName} PRIVATE "${VERTEX_FILES};${FRAGMENT_FILES}")
 source_group("Vertex Shaders" REGULAR_EXPRESSION "vert$")
 source_group("Fragment Shaders" REGULAR_EXPRESSION "frag$")
 
-add_executable(Nikman src/launcher.cpp)
+add_executable(Nikman src/launcher.cpp src/Nikman.rc)
 set_property(TARGET Nikman PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+configure_file("3rdparty/OpenAL/openal32.dll" "${CMAKE_BINARY_DIR}/openal32.dll" COPYONLY)
 
 # Install program
 
@@ -48,5 +50,7 @@ install(DIRECTORY shaders DESTINATION .)
 install(DIRECTORY resources DESTINATION .)
 #install(FILES "scripts/Nikman.bat" DESTINATION .)
 install(FILES "3rdparty/OpenAL/openal32.dll" DESTINATION bin)
+install(FILES "installer/comandi.bat" DESTINATION .)
+install(FILES "installer/NikmanInstaller.wxs" DESTINATION .)
 install(TARGETS ${ProjectName} RUNTIME DESTINATION bin)
 install(TARGETS Nikman RUNTIME DESTINATION .)

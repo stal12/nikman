@@ -73,16 +73,7 @@ void processInput(GLFWwindow* window, unsigned int& wasd)
 int main()
 {
 
-    //sf::SoundBuffer buffer;
-    //if (!buffer.loadFromFile((path(kSoundsRoot) / path("stab.wav")).string()))
-    //    return -1;
-
-    //sf::Sound sound;
-    //sound.setBuffer(buffer);
-    //sound.play();
-
-
-    LevelDesc level = ReadLevelDesc((std::filesystem::path(kLevelRoot) / std::filesystem::path("level.txt")).string().c_str()); // TODO remove this
+    //LevelDesc level = ReadLevelDesc((std::filesystem::path(kLevelRoot) / std::filesystem::path("level.txt")).string().c_str()); // TODO remove this
 
     // Initialize glfw
     glfwInit();
@@ -93,8 +84,8 @@ int main()
 
     // Create window object
     glfwWindowHint(GLFW_SAMPLES, 4);    // MSAA
-    //GLFWwindow* window = glfwCreateWindow(kWindowWidth, kWindowHeight, "Nikman", glfwGetPrimaryMonitor(), NULL);
-    GLFWwindow* window = glfwCreateWindow(kWindowWidth, kWindowHeight, "Nikman", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(kWindowWidth, kWindowHeight, "Nikman", glfwGetPrimaryMonitor(), NULL);
+    //GLFWwindow* window = glfwCreateWindow(kWindowWidth, kWindowHeight, "Nikman", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -121,10 +112,10 @@ int main()
     stbi_set_flip_vertically_on_load(true);
     
     int height, width;
-    atlas = MakeTexture("atlas.png", width, height, true, true);   // TODO: è orribile farlo qua, sarebbe bello usare RAII, ma come?
+    atlas = MakeTexture("atlas.png", width, height, true, true);   // it would be better to use RAII
 
     {
-        Game game(level);
+        Game game;
         glEnable(GL_MULTISAMPLE);
         glEnable(GL_BLEND);
         glEnable(GL_FRAMEBUFFER_SRGB);

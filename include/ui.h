@@ -12,7 +12,6 @@
 #include "shader.h"
 
 
-
 struct Glyph {
 
     char c;
@@ -37,6 +36,28 @@ struct Font {
     unsigned int texture;
     int texture_width;
     int texture_height;
+
+    Font() {}
+
+    Font(const Font& other) = delete;
+    Font(Font&& other) = delete;
+    Font& operator=(const Font& other) = delete;
+    
+    Font& operator=(Font&& other) {
+        glDeleteTextures(1, &texture);        
+        texture = other.texture;
+
+        family = std::move(other.family);
+        size = other.size;
+        texture_width = other.texture_width;
+        texture_height = other.texture_height;
+        h_space = other.h_space;
+        for (int i = 0; i < 95; ++i) {
+            glyphs[i] = std::move(other.glyphs[i]);
+        }
+
+        return *this;
+    }
 
     ~Font() {
         glDeleteTextures(1, &texture);
@@ -189,7 +210,7 @@ struct Writing {
     float y;
     unsigned int n_vertices;
     bool highlighted;
-    bool dynamic;
+    const bool dynamic;
     const Font& font;
 
     Writing(const char* str, int x_, int y_, const Font& font_, bool dynamic_ = false, bool highlighted_ = false) :
@@ -267,7 +288,6 @@ struct Writing {
             usage = GL_STATIC_DRAW;
         }
         glBufferData(GL_ARRAY_BUFFER, len * 24 * sizeof(float), vertices.data(), usage);
-        //glBufferData(GL_ARRAY_BUFFER, sizeof(prova), prova, GL_STATIC_DRAW);
 
         // 3. then set our vertex attributes pointers
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
@@ -278,7 +298,7 @@ struct Writing {
         VAO = VAO_;
         VBO = VBO_;
 
-        n_vertices = len * 6; // TODO fix this
+        n_vertices = len * 6;
     }
 
     ~Writing() {
@@ -333,7 +353,8 @@ struct Writing {
         y(other.y), 
         n_vertices(other.n_vertices), 
         highlighted(other.highlighted),
-        font(other.font)
+        font(other.font),
+        dynamic(other.dynamic)
     {
         // TODO check this trick
         other.VAO = -1;
@@ -446,7 +467,7 @@ struct UI {
 
     UI() : shader("glyph"), shader_background("background") {
         if (!ReadFont((std::filesystem::path(kFontRoot) / std::filesystem::path("centaur_regular_32.xml")).string().c_str(), font)) {
-            std::cerr << "Error in UI constructor: can't read font!\n";
+            std::cerr << "UI::UI: can't read font!\n";
         }
 
         glm::mat4 projection = glm::ortho(0.f, (float)kWindowWidth, 0.f, (float)kWindowHeight, 0.1f, 2.f);
@@ -474,16 +495,16 @@ struct UI {
         AddPanel("game_over", std::move(game_over), false);
 
         Panel game_ui(500, 1075);
-        game_ui.AddWriting("Lives: 3 ", 0, 0, font, true, false);
-        game_ui.AddWriting("Score: 0   ", 450, 0, font, true, false);
+        game_ui.AddWriting("Lives: 3 ", 100, 0, font, true, false);
+        game_ui.AddWriting("Score: 0   ", 650, 0, font, true, false);
         AddPanel("game_ui", std::move(game_ui), false);
 
-        Panel pause(690, 600, 220, font.h_space*2);
+        Panel pause(850, 600, 220, font.h_space*2);
         pause.AddWriting("Resume", 0, 0, font, false, true);
         pause.AddWriting("Back to menu", 0, -font.h_space, font, false);
         AddPanel("pause", std::move(pause), false);
 
-        Panel transition(740, 600, 140, font.h_space);
+        Panel transition(890, 600, 140, font.h_space);
         transition.AddWriting("Stage  1", 5, 0, font, true, false);
         AddPanel("transition", std::move(transition), false);
 
@@ -502,70 +523,6 @@ struct UI {
     }
 
 };
-
-
-
-
-//unsigned int WriteString(const char* str, const Font& font) {
-//
-//    Shader shader("glyph");
-//    shader.use();
-//
-//    glm::mat4 projection = glm::ortho(0.f, (float)kWindowWidth, 0.f, (float)kWindowHeight, 0.1f, 2.f);
-//    shader.SetMat4("projection", projection);
-//
-//    float x = 0;
-//    float y = 100;
-//
-//    const Glyph& g = font.glyphs[33];
-//
-//    float vertices[] = {
-//        x + g.ox, y - g.oy, g.x, g.y,
-//        x + g.ox + g.w, y - g.oy, g.x + g.w, g.y,
-//        x + g.ox, y - g.oy - g.h, g.x, g.y + g.h,
-//        x + g.ox + g.w, y - g.oy, g.x + g.w, g.y,
-//        x + g.ox, y - g.oy - g.h, g.x, g.y + g.h,
-//        x + g.ox + g.w, y - g.oy - g.h, g.x + g.w, g.y + g.h,
-//    };
-//
-//    unsigned int VBO;
-//    unsigned int VAO;
-//
-//    // 1. bind Vertex Array Object
-//    glGenVertexArrays(1, &VAO);
-//    glBindVertexArray(VAO);
-//
-//    // 2. copy our vertices array in a buffer for OpenGL to use
-//    glGenBuffers(1, &VBO);
-//    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-//    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-//
-//    // 3. then set our vertex attributes pointers
-//    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
-//    glEnableVertexAttribArray(0);
-//    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(sizeof(float) * 2));
-//    glEnableVertexAttribArray(1);
-//
-//    return VAO;
-//
-//}
-
-
-//struct MainMenu {
-//
-//    Panel panel;
-//    int selected;
-//
-//    MainMenu() : selected(0), panel(500, 800) {
-//
-//        panel.AddWriting("New game", 0, 0, )
-//
-//
-//    }
-//
-//
-//};
-
 
 
 #endif // NIKMAN_UI_H

@@ -138,8 +138,10 @@ struct Shader {
         geometry ? (prefix + std::string(".geom")).c_str() : nullptr) {}
 
     Shader(const Shader& other) = delete;
+    Shader(Shader&& other) = delete;
     Shader& operator=(const Shader& other) = delete;
     Shader& operator=(Shader&& other) {
+        Release();
         program = other.program;
         valid = other.valid;
         other.program = -1;     // TODO check this trick

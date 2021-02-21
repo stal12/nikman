@@ -9,8 +9,14 @@ uniform mat4 world;
 uniform float h;
 uniform float w;
 
+uniform float x_s;
+uniform float x_e;
+uniform float y_s;
+uniform float y_e;
+
 void main()
 {
     gl_Position = projection * world * vec4(aPos.x, aPos.y, -8.0, 1.0);
-    texCoord = (aTex - vec2(0.5, 0.5)) * vec2(w, h) + vec2(0.5, 0.5);
+    //texCoord = (aTex - vec2(0.5, 0.5)) * vec2(w, h) + vec2(0.5, 0.5);
+    texCoord = aTex * vec2(w, h);
 }

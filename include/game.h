@@ -59,18 +59,18 @@ struct Game {
     sf::SoundBuffer winBuffer;
     sf::Sound win;
 
-    Game(const LevelDesc& level) :
+    Game() :
         state(GameState::MainMenu),
         mt(rd()),
-        map(level.h, level.w, level),
-        mud("mud", level.h, level.w, level.mud),
-        home("home", level.h, level.w, level.home),
-        wall(level.h, level.w, level),
-        crust(level.h, level.w, map.grid),
-        teleport(level.h, level.w, map.grid),
-        nik(Player::Name::Nik, level.h, level.w, map.grid, teleport),
-        ste(Player::Name::Ste, level.h, level.w, map.grid, teleport),
-        weapon(level.h, level.w, map.grid, nik, ste)
+        map(),
+        mud("mud"),
+        home("home"),
+        wall(),
+        crust(map.grid),
+        teleport(map.grid, mt),
+        nik(Player::Name::Nik, map.grid, teleport),
+        ste(Player::Name::Ste, map.grid, teleport),
+        weapon(map.grid, nik, ste)
     {
         level_filenames = {
             //"pacman.txt",
@@ -94,18 +94,10 @@ struct Game {
 
         Ghost::shader = Shader("ghost");
         for (const auto color : ghost_colors) {
-            ghosts.emplace_back(color, level.h, level.w, map.grid, teleport, mt, nik, ste);
+            ghosts.emplace_back(color, map.grid, teleport, mt, nik, ste);
         }
 
         LoadLevel(level_filenames[current_level].c_str());
-
-        // TODO togliere queste prove
-
-        //Panel panel(50, 0);
-        //panel.AddWriting("YAML!@/\\VA", 0, ui.font.h_space + 100, ui.font, false);
-        //panel.AddWriting("YAML!@/\\VA", 0, 0, ui.font);
-        //ui.AddPanel("prova", std::move(panel));
-
 
         ui.panel_map.at("main_menu").first.writings[main_menu_selected].highlighted = true;
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -218,8 +210,10 @@ struct Game {
                 char str[] = "Lives: 00";
                 snprintf(str + 7, 3, "%d", nik.lives);
                 ui.panel_map.at("game_ui").first.writings[0].Update(str);
+                //std::cerr << "Updated lives\n";
 
                 if (nik.lives <= 0) {
+                    // Game over :(
                     gameOver.play();
                     state = GameState::Over;
                     char strScore[] = "Score: 0   ";
