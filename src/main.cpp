@@ -73,8 +73,6 @@ void processInput(GLFWwindow* window, unsigned int& wasd)
 int main()
 {
 
-    //LevelDesc level = ReadLevelDesc((std::filesystem::path(kLevelRoot) / std::filesystem::path("level.txt")).string().c_str()); // TODO remove this
-
     // Initialize glfw
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -118,7 +116,7 @@ int main()
         Game game;
         glEnable(GL_MULTISAMPLE);
         glEnable(GL_BLEND);
-        glEnable(GL_FRAMEBUFFER_SRGB);
+        //glEnable(GL_FRAMEBUFFER_SRGB);
 
         // Very simple render loop
         float formerFrame = glfwGetTime();
@@ -137,7 +135,7 @@ int main()
             game.Update(delta, wasd, stop_game);
 
             // Render
-            glClearColor(0.01f, 0.01f, 0.01f, 1.0f);
+            glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT);
             game.Render();
 

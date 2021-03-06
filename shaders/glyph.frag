@@ -9,4 +9,5 @@ void main()
 {
     float alpha = texture(fontTexture, texCoord).a;
     FragColor = vec4(color, alpha);
+    FragColor.rgb = pow(FragColor.rgb, vec3(1.0/2.2));
 } 

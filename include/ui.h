@@ -476,7 +476,7 @@ struct UI {
         shader_background.use();
         shader_background.SetMat4("projection", projection);
 
-        Panel main_menu(500, 800);
+        Panel main_menu(1550, 800);
         main_menu.AddWriting("New game 1 player", 0, 0, font);
         main_menu.AddWriting("New game 2 players", 0, -font.h_space, font);
         main_menu.AddWriting("Quit", 0, -font.h_space * 2, font);

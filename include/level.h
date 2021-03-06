@@ -97,33 +97,6 @@ LevelDesc ReadLevelDesc(const char* filename) {
     int y = h - 1;
     int x = 0;
 
-    /*auto MiddleLineLambda = [&]() {
-        EXPECT_CHAR('|')
-            EXPECT_CHAR(' ')
-            for (x = 0; x < w - 1; ++x) {
-                c = is.get();
-                if (!UseLetterLambda(c, x, y)) {
-                    INVALID_FORMAT
-                }
-                EXPECT_CHAR(' ')
-                    c = is.get();
-                if (c == '|') {
-                    level.ver_walls.emplace_back(x + 1, y);
-                }
-                else if (c != ' ') {
-                    INVALID_FORMAT
-                }
-                EXPECT_CHAR(' ')
-            }
-        c = is.get();
-        if (!UseLetterLambda(c, x, y)) {
-            INVALID_FORMAT
-        }
-        EXPECT_CHAR(' ')
-            EXPECT_CHAR('|')
-            EXPECT_CHAR('\n')
-    };*/
-
     for (y = h - 1; y > 0; --y) {
 
         EXPECT_CHAR('|')

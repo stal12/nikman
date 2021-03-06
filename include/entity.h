@@ -79,6 +79,7 @@ void MakeRectWithCoords(float width, float height, Point a, Point b, unsigned in
 struct Slot {
     // Default data is just a crust
     unsigned short data = 16;    // wasd walls 0 1 2 3 crust 4 weapon 5 home 6 teleport 7 dir 8 9 10 11
+    float angle = 1.5f;
 
     bool Crust() const {
         return data & 16;
@@ -132,12 +133,56 @@ struct Slot {
         data &= ~128;
     }
 
-    // dir is a 2-bit value: 0 w 1 a 2 s 3 d
+    // dir is a 4-bit value: w a s d
     void SetDirection(unsigned char dir) {
         data = (data & ~(512 + 256 + 1024 + 2048)) | (dir << 8);
     }
 
     Slot() {}
+};
+
+struct Sfondo {
+
+    unsigned int VBO;
+    unsigned int VAO;
+    unsigned int texture;
+    Shader shader;
+    int remaining_crusts;
+
+    std::vector<Slot> grid;
+
+    Sfondo() : shader("sfondo") {
+
+        MakeRect(2.f / 1.26f, 2.f, VAO, VBO);
+
+        int width, height;
+        texture = MakeTexture("cover.png", width, height, false, false);
+
+        glm::mat4 world(1.f);
+        world = glm::translate(world, glm::vec3(-1.f + 1.f / 1.26f, 0.f, 0.f));
+        shader.use();
+        shader.SetMat4("world", world);
+
+    }
+
+    ~Sfondo() {
+        glDeleteBuffers(1, &VBO);
+        glDeleteVertexArrays(1, &VAO);
+        glDeleteTextures(1, &texture);
+    }
+
+    void Render() const {
+        shader.use();
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glBindVertexArray(VAO);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+    }
+
+    Sfondo(const Sfondo& other) = delete;
+    Sfondo(Sfondo&& other) = delete;
+    Sfondo& operator=(const Sfondo& other) = delete;
+    Sfondo& operator=(Sfondo&& other) = delete;
+
 };
 
 
@@ -166,11 +211,11 @@ struct Map {
         world = glm::scale(world, glm::vec3(w, h, 1.f));
         shader.SetMat4("world", world);
         shader.SetMat4("projection", kProjection);
-        
-        shader.SetFloat("x_s", 311.f / 383.f);
-        shader.SetFloat("x_e", 383.f / 383.f);
-        shader.SetFloat("y_s", 296.f / 368.f );
-        shader.SetFloat("y_e", 368.f / 368.f );
+
+        shader.SetFloat("x_s", 311.f / 384.f);
+        shader.SetFloat("x_e", 383.f / 384.f);
+        shader.SetFloat("y_s", 296.f / 369.f);
+        shader.SetFloat("y_e", 368.f / 369.f);
 
     }
 
@@ -210,11 +255,18 @@ struct Map {
 
     }
 
-    void LoadLevel(const LevelDesc& level) {
+    void LoadLevel(const LevelDesc& level, std::mt19937& mt) {
         h = level.h;
         w = level.w;
 
+        std::uniform_real_distribution<float> dis(0.0f, 2.f * 3.14159f);
+
         grid = std::vector<Slot>(h * w);
+
+        for (int i = 0; i < h * w; ++i) {
+            grid[i].angle = dis(mt);
+        }
+
         for (const auto& x : level.home) {
             grid[x.first + x.second * w].RemoveCrust();
             grid[x.first + x.second * w].SetHome();
@@ -274,7 +326,7 @@ struct Wall {
 
     Wall() : shader("wall") {
 
-        MakeRectWithCoords(14.f / 72.f, 86.f / 72.f, {265.f / 383.f, 169.f / 368.f}, { 279.f / 383.f, 255.f / 368.f }, VAO, VBO);
+        MakeRectWithCoords(14.f / 72.f, 86.f / 72.f, { 265.f / 384.f, 169.f / 369.f }, { 279.f / 384.f, 255.f / 369.f }, VAO, VBO);
         //MakeRect(14.f / 72.f, 86.f / 72.f, VAO, VBO);
 
         int width, height;
@@ -362,7 +414,7 @@ struct Teleport {
 
     Teleport(std::vector<Slot>& grid_, std::mt19937& mt_) : shader("teleport"), grid(grid_), mt(mt_) {
 
-        MakeRectWithCoords(55.f / 72.f, 55.f / 72.f, {255.f / 383.f, 313.f / 368.f}, { 310.f / 383.f, 368.f / 368.f }, VAO, VBO);
+        MakeRectWithCoords(55.f / 72.f, 55.f / 72.f, { 255.f / 384.f, 313.f / 369.f }, { 310.f / 384.f, 368.f / 369.f }, VAO, VBO);
 
         //int width, height;
         //texture = MakeTexture("teleport.png", width, height, false, true);
@@ -377,6 +429,7 @@ struct Teleport {
             std::cerr << "Teleport::Teleport: can't open file \"waw.wav\"\n";
         }
         sound.setBuffer(soundBuffer);
+        sound.setVolume(25.f);
 
     }
 
@@ -463,7 +516,7 @@ struct Player {
     static int lives;
 
     const float speed = 4.5f;
-    const float hit_recover_time = 1.0f;
+    const float hit_recover_time = 2.0f;
     const float blink_freq = 50.0f;
 
     enum class State { Idle, Moving };
@@ -473,7 +526,7 @@ struct Player {
     Teleport& teleport;
 
     Name name;
-    bool armed;
+    bool armed = false;
     float weapon_t;
     const float baseWeaponDuration = 8.f;
     float weaponDuration;
@@ -496,11 +549,11 @@ struct Player {
         Point a, b;
         if (name == Name::Nik) {
             a = { 0.f, 57.f / 368.f };
-            b = { 56.f / 383.f, 113.f / 368.f };
+            b = { 56.f / 384.f, 113.f / 369.f };
         }
         else {
             a = { 0.f, 0.f };
-            b = { 56.f / 383.f, 56.f / 368.f };
+            b = { 56.f / 384.f, 56.f / 369.f };
         }
 
         MakeRectWithCoords(56.f / 72.f, 56.f / 72.f, a, b, VAO, VBO);
@@ -528,6 +581,7 @@ struct Player {
             std::cerr << "Player::Player: can't open file \"liscio.wav\"\n";
         }
         liscio.setBuffer(liscioBuffer);
+        liscio.setVolume(20);
 
         if (name == Name::Nik) {
             if (!gnamBuffer.loadFromFile(SoundPath("gnam_ste.wav"))) {
@@ -540,6 +594,7 @@ struct Player {
             }
         }
         gnam.setBuffer(gnamBuffer);
+        gnam.setVolume(1.f);
 
     }
 
@@ -587,10 +642,6 @@ struct Player {
         armed = true;
     }
 
-    //void LoseWeapon() {
-    //    armed = false;
-    //}
-
     void Update(float delta, unsigned int wasd, float other_x, float other_y, unsigned int& eaten, bool& weapon) {
 
         // Update weapon
@@ -618,7 +669,7 @@ struct Player {
                 std::swap(x, next_x);
                 std::swap(y, next_y);
                 t = 1.f - t;
-                grid[y * w + x].SetDirection(DirTo2Bit(direction));
+                grid[y * w + x].SetDirection(direction);
             }
 
             constexpr float otherDistMin = 0.5f;
@@ -664,7 +715,7 @@ struct Player {
         if (t < dist_threshold) {
             if (grid[y * w + x].Crust()) {
                 ++eaten;
-                //gnam.play();
+                gnam.play();
                 grid[y * w + x].RemoveCrust();
             }
             if (grid[y * w + x].Weapon()) {
@@ -675,7 +726,7 @@ struct Player {
         if (t > 1 - dist_threshold) {
             if (grid[next_y * w + next_x].Crust()) {
                 ++eaten;
-                //gnam.play();
+                gnam.play();
                 grid[next_y * w + next_x].RemoveCrust();
             }
             if (grid[next_y * w + next_x].Weapon()) {
@@ -701,7 +752,7 @@ struct Player {
 
             float shiftX = 0;
             if (state == State::Moving) {
-                shiftX = ((DirTo2Bit(direction) + 1) * 57.f) / 383.f;
+                shiftX = ((DirTo2Bit(direction) + 1) * 57.f) / 384.f;
             }
             shader.SetFloat("shiftX", shiftX);
 
@@ -766,7 +817,7 @@ struct Crust {
 
     Crust(std::vector<Slot>& grid_) : shader("crust"), grid(grid_) {
 
-        MakeRectWithCoords(16.f / 72.f, 32.f / 72.f, {260.f / 383.f, 278.f / 368.f}, { 276.f / 383.f, 310.f / 368.f }, VAO, VBO);
+        MakeRectWithCoords(16.f / 72.f, 32.f / 72.f, { 260.f / 384.f, 278.f / 369.f }, { 276.f / 384.f, 310.f / 369.f }, VAO, VBO);
 
         //int width, height;
         //texture = MakeTexture("crust.png", width, height, false, true);
@@ -797,6 +848,8 @@ struct Crust {
 
                 if (grid[y * w + x].Crust()) {
 
+                    const float angle = grid[y * w + x].angle;
+
                     glm::mat4 world(1.f);
                     world = glm::translate(world, glm::vec3(
                         -w / 2.f + size / 2.f + size * x,
@@ -805,6 +858,7 @@ struct Crust {
                     ));
 
                     world = glm::scale(world, glm::vec3(size, size, 1.f));
+                    world = glm::rotate(world, angle, glm::vec3(0.f, 0.f, 1.f));
                     shader.SetMat4("world", world);
 
                     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -930,7 +984,7 @@ struct Weapon {
         ste(ste_)
     {
 
-        MakeRectWithCoords(30.f / 72.f, 44.f / 72.f, {279.f / 383.f, 266.f / 368.f}, { 309.f / 383.f, 310.f / 368.f }, VAO, VBO);
+        MakeRectWithCoords(30.f / 72.f, 44.f / 72.f, { 279.f / 384.f, 266.f / 369.f }, { 309.f / 384.f, 310.f / 369.f }, VAO, VBO);
 
         //int width, height;
         //texture = MakeTexture("sword.png", width, height, false, true);
@@ -1046,6 +1100,7 @@ struct Ghost {
     static const float speed_array[5];
     static const float y_array[5];
     static const char* const sound_array[5];
+    static const char* const hit_array[5];
 
     const int size = 1;
 
@@ -1088,6 +1143,9 @@ struct Ghost {
     sf::SoundBuffer soundBuffer;
     sf::Sound sound;
 
+    sf::SoundBuffer hitSoundBuffer;
+    sf::Sound hitSound;
+
     Ghost(Color color_, std::vector<Slot>& grid_, Teleport& teleport_, std::mt19937& mt_, const Player& nik_, const Player& ste_) :
         color(color_),
         state(State::Home),
@@ -1100,8 +1158,8 @@ struct Ghost {
     {
 
         Point a, b;
-        a = { 0.f, y_array[static_cast<int>(color)] / 368.f };
-        b = { 50.f / 383.f, (y_array[static_cast<int>(color)] + 50.f) / 368.f };
+        a = { 0.f, y_array[static_cast<int>(color)] / 369.f };
+        b = { 50.f / 384.f, (y_array[static_cast<int>(color)] + 50.f) / 369.f };
 
         MakeRectWithCoords(50.f / 72.f, 50.f / 72.f, a, b, VAO, VBO);
 
@@ -1129,6 +1187,13 @@ struct Ghost {
             std::cerr << "Ghost::Ghost: can't open file \"" << sound_array[static_cast<int>(color)] << "\"\n";
         }
         sound.setBuffer(soundBuffer);
+        sound.setVolume(25);
+
+        if (!hitSoundBuffer.loadFromFile(SoundPath(hit_array[static_cast<int>(color)]))) {
+            std::cerr << "Ghost::Ghost: can't open file \"" << hit_array[static_cast<int>(color)] << "\"\n";
+        }
+        hitSound.setBuffer(hitSoundBuffer);
+        hitSound.setVolume(25);
 
     }
 
@@ -1173,6 +1238,8 @@ struct Ghost {
         ste(other.ste),
         soundBuffer(std::move(other.soundBuffer)),
         sound(std::move(other.sound)),
+        hitSoundBuffer(std::move(other.hitSoundBuffer)),
+        hitSound(std::move(other.sound)),
         baseSpeed(other.baseSpeed)
     {
         other.VAO = -1;
@@ -1180,6 +1247,7 @@ struct Ghost {
         // TODO: check this trick
 
         sound.setBuffer(soundBuffer);
+        hitSound.setBuffer(hitSoundBuffer);
     }
 
     ~Ghost() {
@@ -1275,6 +1343,11 @@ struct Ghost {
 
     void SetNewDir(float player_x, float player_y, unsigned char player_dir, float red_x, float red_y) {
 
+        //if (y * w + x < 0 || y * w + x >= grid.size()) {
+        //    std::cerr << "Jemel color " << static_cast<int>(color) << " is in cell (" << y << ", " << x << ")\n";
+        //    return;
+        //}
+
         const unsigned char walls = grid[y * w + x].data & 15;
 
         unsigned char possible_dirs = ~walls & 15;
@@ -1345,21 +1418,31 @@ struct Ghost {
 
                     if (color == Color::Yellow) {
 
-                        unsigned char player_dir = grid[y * w + x].Direction();
-                        if (player_dir & possible_dirs_without_back) {
-                            direction = player_dir;
+                        //if (y * w + x < 0 || y * w + x >= grid.size()) {
+                        //    std::cerr << "Jemel yellow is in cell (" << y << ", " << x << ")\n";
+                        //    return;
+                        //}
+
+                        unsigned char player_trace = grid[y * w + x].Direction();
+                        if (player_trace & possible_dirs_without_back) {
+                            direction = player_trace & possible_dirs_without_back;
                         }
                         else {
                             RandomDirection(possible_dirs_without_back, n_dirs);
                         }
-                        return; 
+                        return;
                     }
 
                     else if (color == Color::Blue) {
 
-                        unsigned char player_dir = grid[y * w + x].Direction();
-                        if (player_dir & possible_dirs_without_back) {
-                            direction = player_dir;
+                        //if (y * w + x < 0 || y * w + x >= grid.size()) {
+                        //    std::cerr << "Jemel blue is in cell (" << y << ", " << x << ")\n";
+                        //    return;
+                        //}
+
+                        unsigned char player_trace = grid[y * w + x].Direction();
+                        if (player_trace & possible_dirs_without_back) {
+                            direction = player_trace & possible_dirs_without_back;
                         }
                         else {
                             ApproachNearest(possible_dirs_without_back);
@@ -1421,7 +1504,7 @@ struct Ghost {
                         target_y = 2 * player_front_two_y - red_y;
                     }
                     else if (color == Color::Green) {
-                    // Legacy
+                        // Legacy
                         const float dist = (precise_x - player_x) * (precise_x - player_x) + (precise_y - player_y) * (precise_y - player_y);
                         if (dist > 6.f) { // TODO remove magic number
                             target_x = player_x;
@@ -1493,6 +1576,10 @@ struct Ghost {
         if (t >= 1.f) {
             x = next_x;
             y = next_y;
+            //if (y * w + x < 0 || y * w + x >= grid.size()) {
+            //    std::cerr << "Jemel color " << static_cast<int>(color) << " is in cell (" << y << ", " << x << ")\n";
+            //    return;
+            //}
             if (grid[y * w + x].Teleport() && !just_teleported) {
                 teleport.RandomDestination(x, y);
                 next_x = x;
@@ -1562,7 +1649,7 @@ struct Ghost {
         world = glm::scale(world, glm::vec3(size, size, 1.f));
         shader.SetMat4("world", world);
 
-        float shiftX = ((DirTo2Bit(direction) + 1) * 51.f) / 383.f;
+        float shiftX = ((DirTo2Bit(direction) + 1) * 51.f) / 384.f;
         shader.SetFloat("shiftX", shiftX);
 
         glBindTexture(GL_TEXTURE_2D, atlas);
@@ -1622,11 +1709,12 @@ struct Ghost {
 //const char* const Ghost::texture_array[5] = { "ghost_red.png", "ghost_yellow.png" , "ghost_blue.png" , "ghost_brown.png", "ghost_purple.png" };
 const float Ghost::speed_array[5] = { 1.3f, 1.7f, 1.5f, 1.9f, 1.6f };
 const float Ghost::y_array[5] = { 216.f, 267.f, 318.f, 114.f, 165.f };
-const char* const Ghost::sound_array[5] = { "numeri.wav", "numeri.wav", "numeri.wav", "numeri.wav", "numeri.wav" };
+const char* const Ghost::sound_array[5] = { "numeri.wav", "bam.wav", "buffon.wav", "headshot.wav", "numeri.wav" };
+const char* const Ghost::hit_array[5] = { "barbani.wav", "berta.wav", "onesto.wav", "berta.wav", "barbani.wav" };
 Shader Ghost::shader;
 
 //const char* const Player::texture_array[2] = { "nik.png", "ste.png" };
 
 int Player::lives;
 
-#endif
+#endif // NIKMAN_ENTITY_H

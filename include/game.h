@@ -20,6 +20,7 @@ struct Game {
 
     static const std::vector<Ghost::Color> ghost_colors;
 
+    Sfondo sfondo;
     Map map;
     Tile mud;
     Tile home;
@@ -59,6 +60,8 @@ struct Game {
     sf::SoundBuffer winBuffer;
     sf::Sound win;
 
+    sf::Music music;
+
     Game() :
         state(GameState::MainMenu),
         mt(rd()),
@@ -72,32 +75,14 @@ struct Game {
         ste(Player::Name::Ste, map.grid, teleport),
         weapon(map.grid, nik, ste)
     {
-        level_filenames = {
-            //"pacman.txt",
-            //"level.txt",
-            //"spispopd1.txt",
-            //"spispopd2.txt",
-            //"level2.txt",
-            //"level3.txt",
-            //"level4.txt"
-            "livello1.txt",
-            "livello2.txt",
-            "livello3.txt",
-            "livello4.txt",
-            "livello5.txt",
-            "livello_jemel.txt",
-            "livello_ragno.txt",
-            "livello_cervello.txt",
-            "livello_uccello.txt",
-            "livello_scimmia.txt",
-        };
+        level_filenames = LoadLevelsList();
 
         Ghost::shader = Shader("ghost");
         for (const auto color : ghost_colors) {
             ghosts.emplace_back(color, map.grid, teleport, mt, nik, ste);
         }
 
-        LoadLevel(level_filenames[current_level].c_str());
+        LoadLevel(level_filenames[current_level].c_str(), mt);
 
         ui.panel_map.at("main_menu").first.writings[main_menu_selected].highlighted = true;
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -107,6 +92,7 @@ struct Game {
             std::cerr << "Game::Game: can't open file \"arato.wav\"\n";
         }
         gameOver.setBuffer(gameOverBuffer);
+        gameOver.setVolume(20.f);
 
         if (!grabWeaponBuffer.loadFromFile(SoundPath("nooo.wav"))) {
             std::cerr << "Game::Game: can't open file \"nooo.wav\"\n";
@@ -117,11 +103,18 @@ struct Game {
             std::cerr << "Game::Game: can't open file \"concettualmente.wav\"\n";
         }
         endLevel.setBuffer(endLevelBuffer);
+        endLevel.setVolume(25.f);
 
         if (!winBuffer.loadFromFile(SoundPath("luna.wav"))) {
             std::cerr << "Game::Game: can't open file \"luna.wav\"\n";
         }
         win.setBuffer(winBuffer);
+        win.setVolume(5.f);
+
+        if (!music.openFromFile(SoundPath("music.wav"))) {
+            std::cerr << "Game::Game: can't open file \"music.wav\"\n";
+        }
+        music.setVolume(5.f);
 
     }
 
@@ -145,6 +138,7 @@ struct Game {
                 ui.panel_map.at("pause").first.writings[pause_menu_selected].highlighted = true;
                 ui.panel_map.at("pause").first.writings[(pause_menu_selected + 1) % 2].highlighted = false;
                 prev_wasd = wasd;
+                music.pause();
                 return;
             }
 
@@ -176,6 +170,7 @@ struct Game {
                         ghost.Killed();
                         scoreDelta += killScore;
                         weapon.PlaySound();
+                        ghost.hitSound.play();
                     }
                     else {
                         hitNik = true;
@@ -187,6 +182,7 @@ struct Game {
                         ghost.Killed();
                         scoreDelta += killScore;
                         weapon.PlaySound();
+                        ghost.hitSound.play();
                     }
                     else {
                         hitSte = true;
@@ -214,6 +210,7 @@ struct Game {
 
                 if (nik.lives <= 0) {
                     // Game over :(
+                    music.stop();
                     gameOver.play();
                     state = GameState::Over;
                     char strScore[] = "Score: 0   ";
@@ -229,6 +226,7 @@ struct Game {
             if (map.remaining_crusts <= 0 || (wasd == 2 + 4 + 8 && prev_wasd != 2 + 4 + 8)) {
                 // Fine livello!
                 current_level++;
+                music.stop();
                 if (current_level == level_filenames.size()) {
                     win.play();
                     state = GameState::End;                    
@@ -237,11 +235,11 @@ struct Game {
                     ui.panel_map.at("end_game").first.writings[1].Update(strScore);
 
                     ui.panel_map.at("end_game").second = true;
-                    ui.panel_map.at("game_ui").second = false;
+                    ui.panel_map.at("game_ui").second = false;                    
                 }
                 else {
                     endLevel.play();
-                    LoadLevel(level_filenames[current_level].c_str());
+                    LoadLevel(level_filenames[current_level].c_str(), mt);
                     char str[] = "Stage xx";
                     snprintf(str + 6, 3, "%2d", current_level + 1);
                     ui.panel_map.at("transition").first.writings[0].Update(str);
@@ -295,7 +293,7 @@ struct Game {
                     nik.lives = 3;
                     current_level = 0;
                     score = 0;
-                    LoadLevel(level_filenames[current_level].c_str());
+                    LoadLevel(level_filenames[current_level].c_str(), mt);
                     ui.panel_map.at("game_ui").second = true;
                     ui.panel_map.at("main_menu").second = false;
                     state = GameState::Transition;
@@ -356,6 +354,7 @@ struct Game {
                     ui.panel_map.at("game_ui").second = true;
                     ui.panel_map.at("pause").second = false;
                     prev_wasd = wasd;
+                    music.play();
                     return;
                 }
                 else if (pause_menu_selected == 1) {
@@ -365,6 +364,7 @@ struct Game {
                     ui.panel_map.at("pause").second = false;
                     ui.panel_map.at("game_ui").second = false;
                     prev_wasd = wasd;
+                    music.stop();
                     return;
                 }
             }
@@ -373,6 +373,7 @@ struct Game {
                 state = GameState::Game;
                 ui.panel_map.at("pause").second = false;
                 prev_wasd = wasd;
+                music.play();
                 return;
             }
             else if ((wasd & 16) && !(prev_wasd & 16)) {
@@ -393,6 +394,7 @@ struct Game {
                 state = GameState::Game;
                 ui.panel_map.at("transition").second = false;
                 prev_wasd = wasd;
+                music.play();
                 return;
             }
         }
@@ -415,15 +417,18 @@ struct Game {
                 ghost.Render();
             }
         }
+        else if (state == GameState::MainMenu) {
+            sfondo.Render();
+        }
 
         ui.Render();
     }
 
-    void LoadLevel(const char* filename) {
+    void LoadLevel(const char* filename, std::mt19937& mt) {
 
         LevelDesc level = ReadLevelDesc((std::filesystem::path(kLevelRoot) / std::filesystem::path(filename)).string().c_str());
 
-        map.LoadLevel(level);
+        map.LoadLevel(level, mt);
         mud.LoadLevel(level, level.mud);
         home.LoadLevel(level, level.home);
         wall.LoadLevel(level);
@@ -441,6 +446,8 @@ struct Game {
 };
 
 const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Yellow, Ghost::Color::Blue, Ghost::Color::Purple };
+//const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, 
+//Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Yellow, Ghost::Color::Blue, Ghost::Color::Blue, Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue,Ghost::Color::Blue, Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red,Ghost::Color::Red, };
 //const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Yellow, Ghost::Color::Blue, Ghost::Color::Purple };
 //const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Red, Ghost::Color::Purple };
 //const std::vector<Ghost::Color> Game::ghost_colors = { Ghost::Color::Blue };

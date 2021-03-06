@@ -17,6 +17,7 @@ static constexpr char* const kLevelRoot = "../resources/levels";
 static constexpr char* const kSoundsRoot = "../resources/sounds";
 static constexpr char* const kFontRoot = "../resources/fonts";
 static constexpr char* const kScoresPath = "highscores.txt";
+static constexpr char* const kLevelsList = "list.txt";
 
 static constexpr float kRatio = 16.f / 9.f;
 static constexpr float kWorldHeight = 15.f;  // It shall be higher in production
@@ -101,6 +102,30 @@ unsigned char DirTo2Bit(unsigned char dir) {
     else if (dir == 2) return 1;
     else if (dir == 4) return 2;
     else return 3;
+}
+
+std::vector<std::string> LoadLevelsList() {
+
+    std::vector<std::string> res;
+
+    std::ifstream is(std::filesystem::path(kLevelRoot) / std::filesystem::path(kLevelsList));
+    if (!is.is_open()) {
+        std::cerr << "LoadLevelList: can't open levels list.\n";
+        return res;
+    }
+
+    while (true) {
+        std::string s;
+        std::getline(is, s);
+        if (s.size() > 0) {
+            res.push_back(std::move(s));
+        }
+        else {
+            break;
+        }
+    }
+
+    return res;
 }
 
 #endif // NIKMAN_UTILITY_H
