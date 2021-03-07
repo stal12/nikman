@@ -223,7 +223,7 @@ struct Game {
             }
 
             map.remaining_crusts -= eaten;
-            if (map.remaining_crusts <= 0 || (wasd == 2 + 4 + 8 && prev_wasd != 2 + 4 + 8)) {
+            if (map.remaining_crusts <= 0) { // || (wasd == 2 + 4 + 8 && prev_wasd != 2 + 4 + 8)) {
                 // Fine livello!
                 current_level++;
                 music.stop();

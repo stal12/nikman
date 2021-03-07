@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <Wix xmlns='http://schemas.microsoft.com/wix/2006/wi'>
   <Product Name='Nikman' Id='65273F14-FEA9-4BAE-93D8-766FD28DC76B' UpgradeCode='CD264164-0B9F-4369-A102-318D3E6C35E8'
-    Language='1033' Codepage='1252' Version='1.0.0' Manufacturer='Stefano Allegretti'>
+    Language='1033' Codepage='1252' Version='1.0.1' Manufacturer='Stefano Allegretti'>
 
     <Package Id='*' Keywords='Installer' Description="Nikman Installer"
       Comments='Sto gran cippolippo' Manufacturer='Stefano Allegretti'
@@ -15,7 +15,7 @@
     <Upgrade Id='CD264164-0B9F-4369-A102-318D3E6C35E8'>
         <UpgradeVersion OnlyDetect='no' Property='PREVIOUSFOUND'
             Minimum='0.1.0' IncludeMinimum='yes'
-            Maximum='1.0.0' IncludeMaximum='no' />
+            Maximum='1.0.1' IncludeMaximum='no' />
             <!--
         <UpgradeVersion OnlyDetect='yes' Property='SELFFOUND'
             Minimum='1.0.0' IncludeMinimum='yes'
