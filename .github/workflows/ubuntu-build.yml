@@ -1,0 +1,29 @@
+
+name: Ubuntu Build
+
+on:
+  push:
+    branches-ignore:
+      - master
+
+jobs:
+  build-x64-windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Dependencies configuration
+        run: |
+          sudo apt-get update
+          sudo apt-get install glfw3-dev -y
+
+      - name: CMake configure
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+
+      - name: CMake build
+        run: |
+          cd build
+          cmake --build . --config Release
