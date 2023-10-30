@@ -130,3 +130,6 @@
 *.pssc     text eol=crlf
 *.psrc     text eol=crlf
 *.cdxml    text eol=crlf
+
+# Audio files
+.wav      binary
