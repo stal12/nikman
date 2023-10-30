@@ -74,7 +74,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_ICON1               ICON                    "F:\\progetti miei\\nikman\\resources\\Nikman.ico"
+IDI_ICON1               ICON                    "..\\resources\\Nikman.ico"
 
 #endif    // Italian (Italy) resources
 /////////////////////////////////////////////////////////////////////////////
