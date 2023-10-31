@@ -7,7 +7,7 @@ on:
       - master
 
 jobs:
-  build-x64-ubuntu:
+  gcc-11-ubuntu:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -15,7 +15,7 @@ jobs:
       - name: Dependencies configuration
         run: |
           sudo apt-get update
-          sudo apt-get install libglfw3-dev libsfml-dev libjpeg-dev libfreetype6-dev libxcb-image0-dev -y
+          sudo apt-get install libglfw3-dev libsfml-dev -y
 
       - name: CMake configure
         run: |
