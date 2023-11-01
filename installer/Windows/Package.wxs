@@ -3,7 +3,9 @@
     <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
 
       <Feature Id="Complete" Title="Nikman" Display="expand" Level="1" ConfigurableDirectory="INSTALLDIR" Description="Install Nikman game components">
-          <ComponentGroupRef Id="GameComponents" />          
+          <ComponentGroupRef Id="GameComponents" />
+          <ComponentGroupRef Id="ResourcesGroup" />
+          <ComponentGroupRef Id="ShadersGroup" />        
       </Feature>
 
     <Icon Id="Nikman.ico" SourceFile="../../resources/Nikman.ico"/>
