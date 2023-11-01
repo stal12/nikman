@@ -1,0 +1,14 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+    <StandardDirectory Id="ProgramFiles6432Folder">
+        <Directory Id="INSTALLDIR" Name="!(bind.Property.ProductName)">
+            <Directory Id="Bin" Name="bin" />
+            <Directory Id="Resources" Name="resources" />
+            <Directory Id="Shaders" Name="shaders" />
+        </Directory>
+    </StandardDirectory>
+      <StandardDirectory Id="ProgramMenuFolder">
+          <Directory Id="ProgramMenuDir" Name="Nikman" />          
+      </StandardDirectory>    
+  </Fragment>
+</Wix>

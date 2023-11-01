@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Fragment>
+      <ComponentGroup Id="GameComponents" Directory="INSTALLDIR">
+          <Component Id="MainExecutable">
+              <File Id="Nikman.exe" Name="Nikman.exe" Source="../../build/Release/Nikman.exe" KeyPath="yes">
+                  <Shortcut Id="StartMenuNikmanShortcut" Directory="ProgramMenuDir" Name="Nikman" WorkingDirectory="INSTALLDIR" Icon="Nikman.ico" IconIndex="0" Advertise="yes"/>
+                  <Shortcut Id="DesktopNikmanShortcut" Directory="DesktopFolder" Name="Nikman" WorkingDirectory="INSTALLDIR" Icon="Nikman.ico" IconIndex="0" Advertise="yes"/>
+              </File>
+          </Component>
+          <Component Id="Credits">
+              <File Id="CreditsFile" Name="credits.txt" Source="../../CREDITS" KeyPath="yes" />
+          </Component>
+          <Component Id="OpenALLibrary" Directory="Bin">
+              <File Id="openal32.dll" Name="openal32.dll" Source="../../build/Release/openal32.dll" KeyPath="yes"/>
+          </Component>
+          <Component Id="Glfw3Library" Directory="Bin">
+                <File Id="glfw3.dll" Name="glfw3.dll" Source="../../build/Release/glfw3.dll" KeyPath="yes"/>
+          </Component>
+          <Component Id="SfmlAudioLibrary" Directory="Bin">
+                <File Id="sfml_audio_2.dll" Name="sfml-audio-2.dll" Source="../../build/Release/sfml-audio-2.dll" KeyPath="yes"/>
+          </Component>
+          <Component Id="SmflSystemLibrary" Directory="Bin">
+                <File Id="sfml_system_2.dll" Name="sfml-system-2.dll" Source="../../build/Release/sfml-system-2.dll" KeyPath="yes"/>
+          </Component>
+          <Component Id="VorbisLibrary" Directory="Bin">
+                <File Id="vorbis.dll" Name="vorbis.dll" Source="../../build/Release/vorbis.dll" KeyPath="yes"/>
+          </Component>
+          <Component Id="VorbisEncLibrary" Directory="Bin">
+                <File Id="vorbisenc.dll" Name="vorbisenc.dll" Source="../../build/Release/vorbisenc.dll" KeyPath="yes"/>            
+          </Component>
+          <Component Id="VorbisfileLibrary" Directory="Bin">
+                <File Id="vorbisfile.dll" Name="vorbisfile.dll" Source="../../build/Release/vorbisfile.dll" KeyPath="yes"/>
+          </Component>
+          <Component Id="OggLibrary" Directory="Bin">
+            <File Id="ogg.dll" Name="ogg.dll" Source="../../build/Release/ogg.dll" KeyPath="yes"/>
+        </Component>
+        <Component Id="FLACLibrary" Directory="Bin">
+            <File Id="FLAC.dll" Name="FLAC.dll" Source="../../build/Release/FLAC.dll" KeyPath="yes"/>
+        </Component>
+          <Component Id="GameExecutable" Directory="Bin">
+              <File Id="Game.exe" Name="Game.exe" Source="../../build/Release/Game.exe" KeyPath="yes" />
+          </Component>                    
+          <Component Id="ProgramMenuDirComp">
+              <RemoveFolder Id="RemoveProgramMenuDir" Directory="ProgramMenuDir" On="uninstall" />
+              <RegistryValue Root="HKCU" Key="Software\!(bind.Property.Manufacturer)\!(bind.Property.ProductName)" Type="string" Value="" KeyPath="yes" />
+          </Component>
+      </ComponentGroup>      
+  </Fragment>
+</Wix>

@@ -1,0 +1,11 @@
+﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="Nikman" Language="1033" Manufacturer="Stefano Allegretti" Version="1.0.2" UpgradeCode="917e994c-428e-4661-b31b-74608a6c8903" InstallerVersion="500">
+    <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
+
+      <Feature Id="Complete" Title="Nikman" Display="expand" Level="1" ConfigurableDirectory="INSTALLDIR" Description="Install Nikman game components">
+          <ComponentGroupRef Id="GameComponents" />          
+      </Feature>
+
+    <Icon Id="Nikman.ico" SourceFile="../../resources/Nikman.ico"/>
+  </Package>
+</Wix>
