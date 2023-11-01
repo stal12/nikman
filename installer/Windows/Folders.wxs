@@ -1,14 +1,21 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
   <Fragment>
     <StandardDirectory Id="ProgramFiles6432Folder">
+      <!-- The main installation directory located under the "Program Files [(x86)]" folder. -->
         <Directory Id="INSTALLDIR" Name="!(bind.Property.ProductName)">
-            <Directory Id="Bin" Name="bin" />
-            <Directory Id="Resources" Name="resources" />
-            <Directory Id="Shaders" Name="shaders" />
+          <!--
+            bin/ : Folder where the game and its dependencies actually are installed
+            resources/ : Folder where the game's resources are installed
+            shaders/ : Folder where the game's shaders are installed
+          -->
+          <Directory Id="Bin" Name="bin" />
+          <Directory Id="Resources" Name="resources" />
+          <Directory Id="Shaders" Name="shaders" />
         </Directory>
     </StandardDirectory>
-      <StandardDirectory Id="ProgramMenuFolder">
-          <Directory Id="ProgramMenuDir" Name="Nikman" />          
-      </StandardDirectory>    
+    <StandardDirectory Id="ProgramMenuFolder">
+      <!-- Directory for the programs menu so the user can find the game in the start menu. -->
+      <Directory Id="ProgramMenuDir" Name="Nikman" />
+    </StandardDirectory>
   </Fragment>
 </Wix>
