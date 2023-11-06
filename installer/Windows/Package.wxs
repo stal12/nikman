@@ -1,13 +1,24 @@
-﻿<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
   <Package Name="Nikman" Manufacturer="Stefano Allegretti" Version="1.0.2" UpgradeCode="917e994c-428e-4661-b31b-74608a6c8903" InstallerVersion="500">
     <MajorUpgrade DowngradeErrorMessage="!(loc.DowngradeError)" />
 
-      <Feature Id="Complete" Title="Nikman" Display="expand" Level="1" ConfigurableDirectory="INSTALLDIR" Description="Install Nikman game components">
-          <ComponentGroupRef Id="GameComponents" />
-          <ComponentGroupRef Id="ResourcesGroup" />
-          <ComponentGroupRef Id="ShadersGroup" />
-      </Feature>
+    <Feature Id="Complete" Title="Nikman" Display="expand" Level="1" ConfigurableDirectory="INSTALLDIR" Description="Install Nikman game components">
+        <ComponentGroupRef Id="GameComponents" />
+        <ComponentGroupRef Id="ResourcesGroup" />
+        <ComponentGroupRef Id="ShadersGroup" />
+    </Feature>
 
     <Icon Id="Nikman.ico" SourceFile="../../resources/Nikman.ico"/>
+
+    <!-- Make sure the cab is embedded in the MSI so we can deploy a single installer file. -->
+    <MediaTemplate EmbedCab="yes"/>
+
+    <!--
+      UI section for the Nikman installer. With the following entry we enable
+      the UI when installing the game.
+    -->
+    <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLDIR"/>
+    <UIRef Id="WixUI_ErrorProgressText" />
+    <UIRef Id="WixUI_InstallDir_NoLicense" />
   </Package>
 </Wix>
