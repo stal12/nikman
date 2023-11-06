@@ -42,9 +42,7 @@ Other 3rd party software already included in the repository:
 4) Compile.
 5) Run Nikman.
 
-In order to also build the installer (MSVC only):
-
-6) Inside the `build` directory, run `comandi.bat`
+**Only for Windows:** if you want to build the installer, follow the instructions in the [tutorial](./docs/installer/CreateWindowsInstaller.md).
 
 ## Customization
 
