@@ -19,6 +19,9 @@
     -->
     <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLDIR"/>
     <UIRef Id="WixUI_ErrorProgressText" />
-    <UIRef Id="WixUI_InstallDir_NoLicense" />
+    <WixVariable
+      Id="WixUILicenseRtf"
+      Value="../../LICENSE"
+    />
   </Package>
 </Wix>
