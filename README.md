@@ -16,7 +16,7 @@ Avoid evil jemels.
 
 ### Windows (installer)
 
-The easiest way to install Nikman under windows is to download the installer from [itch.io](https://itch.io), here: https://stal12.itch.io/nikman.
+The easiest way to install Nikman under windows is to download the installer from [itch.io](https://itch.io), here: <https://stal12.itch.io/nikman>.
 
 ### Linux, Windows (from source)
 
@@ -39,16 +39,15 @@ Other 3rd party software already included in the repository:
 
 1) Clone the repo.
 2) Run CMake, choose the `build` directory, configure, generate.
-4) Compile.
-5) Run Nikman.
+3) Compile.
+4) Run Nikman.
 
-In order to also build the installer (MSVC only):
-
-6) Inside the `build` directory, run `comandi.bat`
+**Only for Windows:** if you want to build the installer, follow the instructions in the [tutorial](./docs/installer/CreateWindowsInstaller.md).
 
 ## Customization
 
 ### Levels
+
 You can add custom levels in the game, by editing files in the `resources/levels` directory, in the source or directly in the installation folder.
 
 If you installed the game in the default path, you may face problems of missing write permission; fear not, and show your computer who's in charge here!
@@ -59,7 +58,7 @@ For convenience, the script `other/libellids/init_maze.py` initializes an empty 
 
 For instance, this is the first level:
 
-```
+```text
 +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
 |                                                       |       |
 +   +---+   +   +---+---+   +---+---+   +---+---+   +   +   +   +
@@ -80,6 +79,7 @@ For instance, this is the first level:
 ```
 
 ### Other
+
 Of course, you can also mod the game in other ways, like changing the textures, sounds and font.
 
 Just replace the files in the `resources` folder with your own.
