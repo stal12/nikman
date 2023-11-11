@@ -1,1 +1,1 @@
-target_include_directories(${ProjectName} PUBLIC include)
+target_include_directories(Nikman PUBLIC include)
