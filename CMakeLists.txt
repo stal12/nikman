@@ -36,12 +36,12 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(SFML COMPONENTS audio CONFIG REQUIRED)
 
-add_executable(Nikman)
-# Set nikman as the startup project in Visual Studio
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Nikman)
+add_executable(NikmanGame)
+# Set NikmanGame as the startup project in Visual Studio
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT NikmanGame)
 
-target_link_libraries(Nikman PRIVATE glfw OpenGL sfml-audio glad::glad)
-target_include_directories(Nikman PRIVATE include "3rdparty/include")
+target_link_libraries(NikmanGame PRIVATE glfw OpenGL sfml-audio glad::glad)
+target_include_directories(NikmanGame PRIVATE include "3rdparty/include")
 
 add_subdirectory(src)
 add_subdirectory(include)
@@ -49,7 +49,7 @@ add_subdirectory(3rdparty)
 
 file(GLOB VERTEX_FILES "shaders/*.vert")
 file(GLOB FRAGMENT_FILES "shaders/*.frag")
-target_sources(Nikman PRIVATE "${VERTEX_FILES};${FRAGMENT_FILES}")
+target_sources(NikmanGame PRIVATE "${VERTEX_FILES};${FRAGMENT_FILES}")
 
 source_group("Vertex Shaders" REGULAR_EXPRESSION "vert$")
 source_group("Fragment Shaders" REGULAR_EXPRESSION "frag$")
@@ -61,8 +61,8 @@ if(MSVC)
   install(DIRECTORY shaders DESTINATION .)
   install(DIRECTORY resources DESTINATION .)
   install(FILES "installer/comandi.bat" DESTINATION .)
-  install(FILES "installer/NikmanInstaller.wxs" DESTINATION .)
+  install(FILES "installer/NikmanGameInstaller.wxs" DESTINATION .)
   install(FILES "credits.txt" DESTINATION .)
-  install(TARGETS Nikman RUNTIME DESTINATION bin)
-  install(TARGETS Nikman RUNTIME DESTINATION .)
+  install(TARGETS NikmanGame RUNTIME DESTINATION bin)
+  install(TARGETS NikmanGame RUNTIME DESTINATION .)
 endif()

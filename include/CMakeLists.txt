@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-target_sources(Nikman PRIVATE
+target_sources(NikmanGame PRIVATE
     utility.h
     shader.h
     entity.h
