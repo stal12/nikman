@@ -468,3 +468,6 @@ FodyWeavers.xsd
 
 !3rdparty/
 !installer/
+installer/Windows/build/
+installer/Windows/generated/
+build/
