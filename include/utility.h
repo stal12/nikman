@@ -1,17 +1,17 @@
 // MIT License
-// 
+//
 // Copyright (c) 2021 Stefano Allegretti, Davide Papazzoni, Nicola Baldini, Lorenzo Governatori e Simone Gemelli
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all
 // copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,6 +26,7 @@
 #include <vector>
 #include <fstream>
 #include <filesystem>
+#include <string_view>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -33,13 +34,13 @@
 static bool isSte = false;
 static unsigned int atlas;
 
-static constexpr char* const kShaderRoot = "../shaders";
-static constexpr char* const kTextureRoot = "../resources/textures";
-static constexpr char* const kLevelRoot = "../resources/levels";
-static constexpr char* const kSoundsRoot = "../resources/sounds";
-static constexpr char* const kFontRoot = "../resources/fonts";
-static constexpr char* const kScoresPath = "highscores.txt";
-static constexpr char* const kLevelsList = "list.txt";
+static constexpr std::string_view kShaderRoot = "../shaders";
+static constexpr std::string_view kTextureRoot = "../resources/textures";
+static constexpr std::string_view kLevelRoot = "../resources/levels";
+static constexpr std::string_view kSoundsRoot = "../resources/sounds";
+static constexpr std::string_view kFontRoot = "../resources/fonts";
+static constexpr std::string_view kScoresPath = "highscores.txt";
+static constexpr std::string_view kLevelsList = "list.txt";
 
 static constexpr float kRatio = 16.f / 9.f;
 static constexpr float kWorldHeight = 15.f;  // It shall be higher in production
@@ -50,14 +51,14 @@ static constexpr float kVerticalShift = 0.3f;  // kWorldHeight / 20.f;
 
 static const glm::mat4 kProjection = glm::ortho(
     -kWorldWidth / 2.f,
-    kWorldWidth / 2.f, 
-    (-kWorldHeight / 2.f) + kVerticalShift, 
-    (kWorldHeight / 2.f) + kVerticalShift, 
-    0.1f, 
+    kWorldWidth / 2.f,
+    (-kWorldHeight / 2.f) + kVerticalShift,
+    (kWorldHeight / 2.f) + kVerticalShift,
+    0.1f,
     10.f);
 
 unsigned int MakeTextureGeneral(const char* filename, int& width, int& height, bool nearest = false, bool alpha = false) {
-    // Texture 
+    // Texture
     unsigned int texture;
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
